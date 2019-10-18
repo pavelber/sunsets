@@ -17,7 +17,7 @@ object DarkSkyConnector {
     }
 
     fun getJsonString(p: PointAtTime): String {
-        val url = URL("https://api.darksky.net/forecast/$secretKey/${p.lat},${p.long},${p.time}")
+        val url = URL("https://api.darksky.net/forecast/$secretKey/${p.lat},${p.long},${p.getLocalTime()}")
 
         with(url.openConnection() as HttpURLConnection) {
             println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")

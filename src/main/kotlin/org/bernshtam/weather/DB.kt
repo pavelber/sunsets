@@ -1,8 +1,12 @@
 package org.bernshtam.weather
 
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import org.apache.commons.lang.time.DateUtils
 import org.flywaydb.core.Flyway
 import java.sql.Connection
+import java.sql.Timestamp
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 object DB {
@@ -37,36 +41,67 @@ object DB {
         return cpds.connection
     }
 
-    fun putToDB(p: PointAtTime, json: String) {
+    fun putToDB(p: PointAtTime, json: String, source:String) {
         getConnection().use { connection ->
             connection.autoCommit = true
             connection.createStatement().use { statement ->
-                p.apply {
-                    val lat1 = (lat * 1000).toInt()
-                    val long1 = (long * 1000).toInt()
-                    val time1 = time
-                    statement.execute("insert into darksky VALUES ($lat1,$long1,$time1,'$json',cast(TIMESTAMP ($time) as date))")
-                }
+
+                val lat = (p.lat * 1000).toInt()
+                val long = (p.long * 1000).toInt()
+                val time = p.getLocalTime()
+                val sql = """
+                        MERGE INTO cache AS t USING (VALUES($lat,$long,$time)) AS vals(lat,long,time)
+                        ON t.latitude=vals.lat AND t.longitude=vals.long and t.time = vals.time
+                        WHEN NOT MATCHED THEN insert  VALUES $lat,$long,$time,'$json',cast(TIMESTAMP ($time) as date), now(), '$source'
+                        WHEN MATCHED THEN update set json = '$json', update_time = now()
+                        """
+               // println(sql)
+                statement.execute(sql)
+
             }
         }
 
     }
 
-    fun get(p: PointAtTime): String? {
+    fun get(p: PointAtTime, source:String): String? {
         getConnection().use { connection ->
             connection.createStatement().use { statement ->
 
-                val lat = (p.lat*1000).toInt()
-                val long = (p.long*1000).toInt()
-                val time = p.time
-                val resultSet = statement.executeQuery("select json from darksky where latitude = $lat and longitude = $long and time = $time")
+                val lat = (p.lat * 1000).toInt()
+                val long = (p.long * 1000).toInt()
+                val time = p.getLocalTime()
+             //   println("select json from darksky where latitude = $lat and longitude = $long and time = $time")
+                val resultSet = statement.executeQuery("select json,update_time from cache where latitude = $lat and longitude = $long and time = $time and source = '$source'")
                 resultSet.use {
                     return if (it.next())
-                        it.getString(1)
+                        if (shouldUpdate(time, it.getTimestamp(2)))
+                            null
+                        else it.getString(1)
                     else null
                 }
             }
 
         }
+    }
+    fun shutdown() {
+        getConnection().use { connection ->
+            connection.createStatement().use { statement ->
+                statement.execute("SHUTDOWN ")
+            }
+        }
+    }
+    private fun shouldUpdate(time: Long, timestamp: Timestamp): Boolean {
+        val nowDate = Date()
+        val requestDate = Date(time * 1000)
+
+        // past not update
+        if (requestDate < nowDate)
+            return false
+
+        val diffInMillies = Math.abs(nowDate.time - timestamp.time)
+        val updatedHoursAgo = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS)
+        return if (DateUtils.isSameDay(nowDate, requestDate))
+            updatedHoursAgo > 0 // today update every hour
+        else updatedHoursAgo > 6 // future update each 6 hours
     }
 }

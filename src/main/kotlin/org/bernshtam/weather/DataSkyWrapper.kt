@@ -6,10 +6,10 @@ import java.io.StringReader
 
 object DataSkyWrapper {
     fun get(p: PointAtTime): JsonObject {
-        var json = DB.get(p)
+        var json = DB.get(p,"darksky")
         if (json == null) {
             json = DarkSkyConnector.getJsonString(p)
-            DB.putToDB(p, json)
+            DB.putToDB(p, json,"darksky")
         }
 
         return Parser.default().parse(StringReader(json)) as JsonObject

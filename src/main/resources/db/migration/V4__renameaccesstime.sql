@@ -1,0 +1,1 @@
+ALTER TABLE DARKSKY ALTER COLUMN access_time rename to update_time;

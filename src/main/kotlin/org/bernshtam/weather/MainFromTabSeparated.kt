@@ -12,6 +12,7 @@ import net.time4j.calendar.astro.SolarTime
 import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
+import org.bernshtam.weather.TAFWrapper.getCloudsAlt
 import org.bernshtam.weather.Utils.EARTH_RADIUS
 import java.io.File
 import java.text.SimpleDateFormat
@@ -21,18 +22,12 @@ import java.util.*
 
 object MainFromTabSeparated {
     private val dateFormat = SimpleDateFormat("dd/MM/yyy")
-    private const val R = 6731.0 // km
-    private const val deltaPosition = 10.0 // km
 
-
-    //Rehovot
-    //val lat = 31.897852
-    //val long = 34.8089183
-    val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
+    val zone = "America/Anchorage" //darkSkyForZone["timezone"] as String
     val zoneId = ZoneId.of(zone)
     @JvmStatic
     fun main(args: Array<String>) {
-
+        DB.migrate()
         val file = File("c:\\temp\\sunsets2.txt")
         val lines = file.readLines()
         val splited = lines.map { it.split("\t") }.sortedBy { it[2] }
@@ -44,6 +39,8 @@ object MainFromTabSeparated {
             val category = line[2]
             processDate(date, lat, long, category)
         }
+
+        DB.shutdown()
     }
 
     private fun processDate(date: String, lat: Double, long: Double, category: String) {
@@ -51,27 +48,23 @@ object MainFromTabSeparated {
         val sunset = place.sunset()
 
         val sunsetMoment = getSunSetMoment(date, sunset)
-        // val pos = SunPosition.at(sunsetMoment, GeoLocation.of(lat, long))
-        val darkSkyJsonOfSunSet = getDarkSkyJson(sunsetMoment, lat, long)
-        val cloudCover = current(darkSkyJsonOfSunSet, "cloudCover") // in 0..1
-        val pressureCover = current(darkSkyJsonOfSunSet, "pressure") // in 0..1
-        //val dewPoint = Utils.getDoubleFromJson(current?.get("dewPoint")) // Fahrenheit
-        //val temperature = Utils.getDoubleFromJson(current?.get("temperature")) // Fahrenheit
-        //val h = if (dewPoint != null && temperature != null) 1000.0 * (temperature - dewPoint) / 4.4 / 3.281 else 0.0 //meters
-        //val h2 = if (dewPoint != null && temperature != null) 122.0 * (F2C(temperature)!! - F2C(dewPoint)!!) else 0.0 //meters
-        // val arcOfSunFromSunsetToNoVisibleToClouds = Math.acos(EARTH_RADIUS / (EARTH_RADIUS + h / 1000.0)) * 180.0 / Math.PI // in degrees
-        val darkSkyAtCloudsPoint = getDarkSkyAfterMinutes(sunsetMoment, 5L, lat, long)
-        val cloudsAtCloudsPoint = current(darkSkyAtCloudsPoint, "cloudCover")
-        val pressureAtCloudsPoint = current(darkSkyAtCloudsPoint, "pressure")
 
-        val darkSkyAtCloudsPoint2 = getDarkSkyAfterMinutes(sunsetMoment, 10L, lat, long)
-        val cloudsAtCloudsPoint2 = current(darkSkyAtCloudsPoint2, "cloudCover")
-        val pressureAtCloudsPoint2 = current(darkSkyAtCloudsPoint2, "pressure")
+        val pointAtSunset = getPoint(sunsetMoment, lat, long)
+        val (cloudCover, pressure, visibility, alt) = getDataAtPoint(pointAtSunset)
 
-        val darkSkyAtSunsetHorizonClouds = getDarkSkyAfterKm(sunsetMoment, 50.0, lat, long)
-        val cloudsAtHorizonClouds = current(darkSkyAtSunsetHorizonClouds, "cloudCover")
-        val darkSkyAtSunsetHorizonClouds2 = getDarkSkyAfterKm(sunsetMoment, 100.0, lat, long)
-        val cloudsAtHorizonClouds2 = current(darkSkyAtSunsetHorizonClouds2, "cloudCover")
+        val pointAtCloudsPoint = getPointAfterMinutes(sunsetMoment, 5L, lat, long)
+        val (cloudsAtCloudsPoint, pressureAtCloudsPoint, visibilityAtCloudsPoint,altAtCloudsPoint) = getDataAtPoint(pointAtCloudsPoint)
+
+        val pointAtCloudsPoint2 = getPointAfterMinutes(sunsetMoment, 10L, lat, long)
+        val (cloudsAtCloudsPoint2, pressureAtCloudsPoin2t, visibilityAtCloudsPoint2, altAtCloudsPoint2) = getDataAtPoint(pointAtCloudsPoint2)
+
+
+        val pointAtSunsetHorizonClouds = getPointAfterKm(sunsetMoment,  lat, long,50.0)
+        val (cloudsAtHorizonClouds, pressureAtHorizonClouds, visibilityAtHorizonClouds, altAtHorizonClouds) = getDataAtPoint(pointAtSunsetHorizonClouds)
+
+        val pointAtSunsetHorizonClouds2 = getPointAfterKm(sunsetMoment,  lat, long, 100.0)
+        val (cloudsAtHorizonClouds2, pressureAtHorizonClouds2, visibilityAtHorizonClouds2, altAtHorizonClouds2) = getDataAtPoint(pointAtSunsetHorizonClouds2)
+
 
         var sunsetPoints = 0
         if (cloudCover != null && cloudCover >= 0.2) sunsetPoints++
@@ -85,27 +78,34 @@ object MainFromTabSeparated {
         if (cloudsAtCloudsPoint != null && cloudsAtCloudsPoint <= 0.3) aftersunsetPoints++
         if (cloudsAtCloudsPoint2 != null && cloudsAtCloudsPoint2 <= 0.3) aftersunsetPoints++
 
-        print("$category\t$date\t$cloudCover\t$cloudsAtHorizonClouds\t$cloudsAtHorizonClouds2\t$cloudsAtCloudsPoint\t$cloudsAtCloudsPoint2\t")
+        print("$category\t$date\t$cloudCover($alt)\t$cloudsAtHorizonClouds($altAtCloudsPoint)\t$cloudsAtHorizonClouds2($altAtCloudsPoint2)\t$cloudsAtCloudsPoint($altAtHorizonClouds)\t$cloudsAtCloudsPoint2($altAtHorizonClouds2)\t")
         // print("${diff(pressureCover,pressureAtCloudsPoint)}\t${diff(pressureAtCloudsPoint,pressureAtCloudsPoint2)}\t${diff(pressureCover,pressureAtCloudsPoint2)}")
         print("$sunsetPoints\t$aftersunsetPoints")
         println()
     }
 
-    private fun diff(d1: Double?, d2: Double?): Double? {
-        if (d1 == null || d2 == null) return null
-        return Math.floor(d2 - d1)
+    private fun getDataAtPoint(pointAtSunset: PointAtTime): DataAtPoint {
+        val darkSkyJsonOfSunSet = DataSkyWrapper.get(pointAtSunset)
+        val cloudCover = current(darkSkyJsonOfSunSet, "cloudCover") // in 0..1
+        val pressureCover = current(darkSkyJsonOfSunSet, "pressure") // in 0..1
+        val visibility = current(darkSkyJsonOfSunSet, "visibility") // in 0..1
+        val alt = getCloudsAlt(pointAtSunset)
+        return DataAtPoint(cloudCover,pressureCover,visibility,alt)
     }
 
-    private fun getDarkSkyAfterKm(sunsetMoment: Moment, km: Double, lat: Double, long: Double): JsonObject {
+
+
+
+    private fun getPointAfterKm(sunsetMoment: Moment, lat: Double, long: Double, km: Double): PointAtTime {
         val zonalDateTime = sunsetMoment.toLocalTimestamp().inLocalView()
         val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
                 SunPosition.at(sunsetMoment, GeoLocation.of(lat, long)).azimuth, km * 1000.0)
         val pointAtTimeOfClouds = PointAtTime.at(pointOfClouds.latitude, pointOfClouds.longitude, zonalDateTime.toTemporalAccessor())
-        val darkSkyAtCloudsPoint = DataSkyWrapper.get(pointAtTimeOfClouds)
-        return darkSkyAtCloudsPoint
+        return pointAtTimeOfClouds
     }
 
-    private fun getDarkSkyAfterMinutes(sunsetMoment: Moment, minutesAfterSunset: Long, lat: Double, long: Double): JsonObject {
+
+    private fun getPointAfterMinutes(sunsetMoment: Moment, minutesAfterSunset: Long, lat: Double, long: Double): PointAtTime {
         val minsAfterSunsetMoment = sunsetMoment.plus(minutesAfterSunset * 60, SI.SECONDS)
         val minsAfterSunsetPosition = SunPosition.at(minsAfterSunsetMoment, GeoLocation.of(lat, long))
         val minsAfterZonalDateTime = minsAfterSunsetMoment.toLocalTimestamp().inLocalView()
@@ -117,15 +117,14 @@ object MainFromTabSeparated {
         val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
                 minsAfterSunsetPosition.azimuth, distanceToClouds)
         val pointAtTimeOfClouds = PointAtTime.at(pointOfClouds.latitude, pointOfClouds.longitude, minsAfterZonalDateTime.toTemporalAccessor())
-        val darkSkyAtCloudsPoint = DataSkyWrapper.get(pointAtTimeOfClouds)
-        return darkSkyAtCloudsPoint
+        return pointAtTimeOfClouds
     }
 
-    private fun getDarkSkyJson(sunsetMoment: Moment, lat: Double, long: Double): JsonObject {
+
+    private fun getPoint(sunsetMoment: Moment, lat: Double, long: Double): PointAtTime {
         val zonalDateTime = sunsetMoment.toLocalTimestamp().inLocalView()
         val pointAtTime = PointAtTime.at(lat, long, zonalDateTime.toTemporalAccessor())
-        val darkSkyJsonOfSunSet = DataSkyWrapper.get(pointAtTime)
-        return darkSkyJsonOfSunSet
+        return pointAtTime
     }
 
     private fun getSunSetMoment(date: String, sunset: ChronoFunction<CalendarDate, Optional<Moment>>): Moment {

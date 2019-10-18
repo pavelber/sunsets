@@ -7,10 +7,10 @@ import java.util.*
 data class PointAtTime private constructor(val lat: Double, val long: Double, val time: ZonedDateTime) {
 
     fun getLocalTime(): Long {
-        return Date.from(time.toInstant()).time / 1000
+        return (Date.from(time.toInstant()).time / 100000)*100
     }
 
-    companion object {
+        companion object {
         fun at(lat: Double, long: Double, time: ZonedDateTime): PointAtTime {
             val latRounded = Utils.roundToHalf(lat * 10.0) / 10.0
             val longRounded = Utils.roundToHalf(long * 10.0) / 10.0
@@ -19,4 +19,4 @@ data class PointAtTime private constructor(val lat: Double, val long: Double, va
     }
 }
 
-data class TAFData(val cloudsAltMeters: Int)
+data class DataAtPoint(val cloudCover:Double?, val pressure:Double?, val visibility:Double?, val cloudsAlt:Int? )

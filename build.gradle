@@ -41,6 +41,8 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.28'
     compile group: 'com.mchange', name: 'c3p0', version: '0.9.5.4'
     compile group: 'com.github.sisyphsu', name: 'dateparser', version: '1.0.2'
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+
 }
 
 compileKotlin {
