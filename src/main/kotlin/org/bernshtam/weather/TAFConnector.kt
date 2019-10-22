@@ -41,7 +41,7 @@ object TAFConnector {
     private fun inTimeSlice(time: ZonedDateTime, start: JsonObject, end: JsonObject): Boolean {
         val start = strToDate(start["dt"] as String)
         val end = strToDate(end["dt"] as String)
-
+       // println("$time between $start and $end")
         return start.isBefore(time) && end.isAfter(time)
     }
 

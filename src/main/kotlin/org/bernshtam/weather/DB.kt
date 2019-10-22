@@ -41,7 +41,7 @@ object DB {
         return cpds.connection
     }
 
-    fun putToDB(p: PointAtTime, json: String, source:String) {
+    fun putToDB(p: PointAtTime, json: String?, source:String) {
         getConnection().use { connection ->
             connection.autoCommit = true
             connection.createStatement().use { statement ->
@@ -50,8 +50,8 @@ object DB {
                 val long = (p.long * 1000).toInt()
                 val time = p.getLocalTime()
                 val sql = """
-                        MERGE INTO cache AS t USING (VALUES($lat,$long,$time)) AS vals(lat,long,time)
-                        ON t.latitude=vals.lat AND t.longitude=vals.long and t.time = vals.time
+                        MERGE INTO cache AS t USING (VALUES($lat,$long,$time,'$source')) AS vals(lat,long,time,source)
+                        ON t.latitude=vals.lat AND t.longitude=vals.long and t.time = vals.time and t.source = vals.source
                         WHEN NOT MATCHED THEN insert  VALUES $lat,$long,$time,'$json',cast(TIMESTAMP ($time) as date), now(), '$source'
                         WHEN MATCHED THEN update set json = '$json', update_time = now()
                         """
