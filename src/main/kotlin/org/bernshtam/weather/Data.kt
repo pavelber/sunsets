@@ -20,3 +20,5 @@ data class PointAtTime private constructor(val lat: Double, val long: Double, va
 }
 
 data class DataAtPoint(val cloudCover:Double?, val pressure:Double?, val visibility:Double?, val cloudsAlt:Int? )
+data class DarkSkyDataAtPoint(val cloudCover:Double?, val pressure:Double?, val visibility:Double?)
+data class MarkAndDescription(val mark:Int, val description:String)
