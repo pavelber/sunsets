@@ -21,6 +21,6 @@ object TAFWrapper {
         val clouds = json?.get("clouds") as JsonArray<JsonObject?>?
         val cloudsObject = (clouds?.sortedBy { it?.get("altitude") as Int? })?.first()
         val altInFeets = cloudsObject?.get("altitude") as Int?
-        return if (altInFeets == null) null else (altInFeets.toDouble() * 0.03048).toInt()
+        return if (altInFeets == null) null else (altInFeets.toDouble() * 30.48).toInt()
     }
 }
