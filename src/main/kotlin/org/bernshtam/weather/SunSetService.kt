@@ -12,99 +12,120 @@ import net.time4j.calendar.astro.SolarTime
 import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
-import org.bernshtam.weather.TAFWrapper.getCloudsAlt
-import org.bernshtam.weather.Utils.DEGREES
-import org.bernshtam.weather.Utils.EARTH_RADIUS
-import org.bernshtam.weather.Utils.METERS_IN_KM
-import org.bernshtam.weather.Utils.MINUTES_PER_DAY
-import org.bernshtam.weather.Utils.SECONDS_PER_MIN
-import java.io.File
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 
+object SunSetService {
 
-object MainFromTabSeparated {
-    private val dateFormat = SimpleDateFormat("dd/MM/yyy")
+    private const val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
+    private val zoneId = ZoneId.of(zone)
+    private const val PATTERN = "dd/MM/yyy"
 
-    val zone = "America/Anchorage" //darkSkyForZone["timezone"] as String
-    val zoneId = ZoneId.of(zone)
-    @JvmStatic
-    fun main(args: Array<String>) {
-        DB.migrate()
-        val file = File("c:\\temp\\sunsets2.txt")
-        val lines = file.readLines()
-        val splited = lines.map { it.split("\t") }.sortedBy { it[2] }
-        splited.forEach { line ->
-            val date = line[0]
-            val latlon = line[1].split(",")
-            val lat = latlon[0].toDouble()
-            val long = latlon[1].toDouble()
-            val category = line[2]
-            processDate(date, lat, long, category)
-        }
+    private val dateFormat = SimpleDateFormat(PATTERN)
+    private val dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN)
 
-        DB.shutdown()
+    fun getMarkAndDescription(lat: Double, long: Double): List<MarkAndDescription> {
+        val today = LocalDate.now()
+        return (0L..2L)
+                .map { today.plus(it, ChronoUnit.DAYS) }
+                .map { getMarkAndDescription(lat, long, it) }
     }
 
-    private fun processDate(date: String, lat: Double, long: Double, category: String) {
+    fun getMarkAndDescription(lat: Double, long: Double, date: LocalDate): MarkAndDescription {
         val place = SolarTime.ofLocation(lat, long)
         val sunset = place.sunset()
 
         val sunsetMoment = getSunSetMoment(date, sunset)
 
         val points = mutableListOf<MarkAndDescription>()
-        points.add(getCloudsNearHorizon(sunsetMoment,lat,long))
-        points.add(getCloudsNearMe(sunsetMoment,lat,long))
+        points.add(getCloudsNearHorizon(sunsetMoment, lat, long))
+        points.add(getCloudsNearMe(sunsetMoment, lat, long))
 
-        println("$category\t$date\t\t")
-
-        println()
+        val result = points.reduce { acc,
+                                     markAndDescription ->
+            MarkAndDescription(date.format(dateTimeFormatter), acc.mark + markAndDescription.mark, acc.maxMark + markAndDescription.maxMark, reduceDescription(acc, markAndDescription))
+        }
+        return result
     }
+
+    private fun reduceDescription(acc: MarkAndDescription, markAndDescription: MarkAndDescription) =
+            reduceDescription(acc.description, markAndDescription.description)
+
+    private fun reduceDescription(acc: String, markAndDescription: String) =
+            if (acc.isBlank())
+                if (markAndDescription.isBlank())
+                    ""
+                else markAndDescription
+            else
+                if (markAndDescription.isBlank())
+                    acc
+                else
+                    "$acc $markAndDescription"
+
     private fun getCloudsNearMe(sunsetMoment: Moment, lat: Double, long: Double): MarkAndDescription {
         var points = 0
         val pointAtSunset = getPoint(sunsetMoment, lat, long)
         val (cloudCover, pressure, visibility, alt) = getDataAtPoint(pointAtSunset)
 
-        val pointAtSunset10South = getPoint(sunsetMoment, lat-0.1, long)
-        val (cloudCover10South, pressure10South, visibility10South, alt10South) = getDataAtPoint(pointAtSunset10South)
+        val pointAtSunset10South = getPoint(sunsetMoment, lat - 0.1, long)
+        val (cloudCover10South, pressure10South, visibility10South) = getDarkSkyDataAtPoint(pointAtSunset10South)
 
-        val pointAtSunset10North = getPoint(sunsetMoment, lat+0.1, long)
-        val (cloudCover10North, pressure10North, visibility10North, alt10North) = getDataAtPoint(pointAtSunset10North)
+        val pointAtSunset10North = getPoint(sunsetMoment, lat + 0.1, long)
+        val (cloudCover10North, pressure10North, visibility10North) = getDarkSkyDataAtPoint(pointAtSunset10North)
 
-        val pointAtSunset10West = getPoint(sunsetMoment, lat, long-0.1)
-        val (cloudCover10West, pressure10West, visibility10West, alt10West) = getDataAtPoint(pointAtSunset10West)
+        val pointAtSunset10West = getPoint(sunsetMoment, lat, long - 0.1)
+        val (cloudCover10West, pressure10West, visibility10West) = getDarkSkyDataAtPoint(pointAtSunset10West)
 
         if (cloudCover != null && cloudCover >= 0.2) points++
         if (cloudCover10South != null && cloudCover10South >= 0.2) points++
         if (cloudCover10North != null && cloudCover10North >= 0.2) points++
-        if (cloudCover10West != null && cloudCover10West >= 0.2) points+=3
+        if (cloudCover10West != null && cloudCover10West >= 0.2) points += 3
 
-        val description = if (points>0) "Clouds above you." else ""
+        var description = if (points > 0) "Clouds above you." else "Clear sky above you."
 
-        return MarkAndDescription(points,description)
+        if (points > 0) {// we have clouds nearby
+            val point5Min = getPointAfterMinutes(sunsetMoment, 5L, lat, long)
+            val point10Min = getPointAfterMinutes(sunsetMoment, 10L, lat, long)
+            val (cloudCover5Min, pressure5Min, visibility5Min) = getDarkSkyDataAtPoint(point5Min)
+            val (cloudCover10Min, pressure10Min, visibility10Min) = getDarkSkyDataAtPoint(point10Min)
+            var cloudPoints = 0
+            if (cloudCover5Min != null && cloudCover5Min <= 0.2) cloudPoints++
+             if (cloudCover10Min != null && cloudCover10Min <= 0.2) cloudPoints++
+
+            if (alt != null && alt > 5000 && cloudPoints > 0) {
+                points += cloudPoints
+                description = reduceDescription(description, "A chance for good light on clouds after sunset.")
+            }
+        }
+
+        return MarkAndDescription("", points, 8, description)
     }
+
     private fun getCloudsNearHorizon(sunsetMoment: Moment, lat: Double, long: Double): MarkAndDescription {
         var points = 0
         val pointAtSunsetHorizonClouds = getPointAfterKm(sunsetMoment, lat, long, 50.0)
         val (cloudsAtHorizonClouds, pressureAtHorizonClouds, visibilityAtHorizonClouds) = getDarkSkyDataAtPoint(pointAtSunsetHorizonClouds)
 
-        if (cloudsAtHorizonClouds != null && cloudsAtHorizonClouds >= 0.2 && cloudsAtHorizonClouds <= 0.7) points++
+        if (cloudsAtHorizonClouds != null && cloudsAtHorizonClouds >= 0.2 && cloudsAtHorizonClouds <= 0.7) points += 2
 
         val pointAtSunsetHorizonClouds2 = getPointAfterKm(sunsetMoment, lat, long, 100.0)
         val (cloudsAtHorizonClouds2, pressureAtHorizonClouds2, visibilityAtHorizonClouds2) = getDarkSkyDataAtPoint(pointAtSunsetHorizonClouds2)
 
-        if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 >= 0.2 && cloudsAtHorizonClouds2 <= 0.7) points++
+        if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 >= 0.2 && cloudsAtHorizonClouds2 <= 0.7) points += 2
 
-        val description = if (points>0) "Nice clouds near horizon." else ""
+        val description = if (points > 0) "Nice clouds near horizon." else ""
 
-        return MarkAndDescription(points,description)
+        return MarkAndDescription("", points, 4, description)
     }
 
     private fun getDataAtPoint(pointAtSunset: PointAtTime): DataAtPoint {
         val (cloudCover, pressure, visibility) = getDarkSkyDataAtPoint(pointAtSunset)
 
-        val alt = getCloudsAlt(pointAtSunset)
+        val alt = TAFWrapper.getCloudsAlt(pointAtSunset)
         return DataAtPoint(cloudCover, pressure, visibility, alt)
     }
 
@@ -121,19 +142,19 @@ object MainFromTabSeparated {
     private fun getPointAfterKm(sunsetMoment: Moment, lat: Double, long: Double, km: Double): PointAtTime {
         val zonalDateTime = sunsetMoment.toLocalTimestamp().inLocalView()
         val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
-                SunPosition.at(sunsetMoment, GeoLocation.of(lat, long)).azimuth, km * METERS_IN_KM)
+                SunPosition.at(sunsetMoment, GeoLocation.of(lat, long)).azimuth, km * Utils.METERS_IN_KM)
         val pointAtTimeOfClouds = PointAtTime.at(pointOfClouds.latitude, pointOfClouds.longitude, zonalDateTime.toTemporalAccessor())
         return pointAtTimeOfClouds
     }
 
 
     private fun getPointAfterMinutes(sunsetMoment: Moment, minutesAfterSunset: Long, lat: Double, long: Double): PointAtTime {
-        val minsAfterSunsetMoment = sunsetMoment.plus(minutesAfterSunset * SECONDS_PER_MIN, SI.SECONDS)
+        val minsAfterSunsetMoment = sunsetMoment.plus(minutesAfterSunset * Utils.SECONDS_PER_MIN, SI.SECONDS)
         val minsAfterSunsetPosition = SunPosition.at(minsAfterSunsetMoment, GeoLocation.of(lat, long))
         val minsAfterZonalDateTime = minsAfterSunsetMoment.toLocalTimestamp().inLocalView()
         //val heightToSeeAfterFeefteenMins = EARTH_RADIUS / (Math.cos(-minsAfterSunsetPosition.elevation * Math.PI / 180.0)) - EARTH_RADIUS
-        val angelAfterNMinutes = minutesAfterSunset * DEGREES / (MINUTES_PER_DAY)
-        val distanceOfAngle = 2 * Math.PI * EARTH_RADIUS * angelAfterNMinutes / DEGREES * METERS_IN_KM
+        val angelAfterNMinutes = minutesAfterSunset * Utils.DEGREES / (Utils.MINUTES_PER_DAY)
+        val distanceOfAngle = 2 * Math.PI * Utils.EARTH_RADIUS * angelAfterNMinutes / Utils.DEGREES * Utils.METERS_IN_KM
         val distanceToClouds = 2 * distanceOfAngle
         //println(minutesAfterSunset.toString()+" "+distanceToClouds)
         val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
@@ -149,13 +170,8 @@ object MainFromTabSeparated {
         return pointAtTime
     }
 
-    private fun getSunSetMoment(date: String, sunset: ChronoFunction<CalendarDate, Optional<Moment>>): Moment {
-        val startOfDay = dateFormat.parse(date)
-        //val darkSkyForZone = DataSkyWrapper.get(p)
-        val toLocalDate = startOfDay.toInstant()
-                .atZone(zoneId)
-                .toLocalDate()
-        val sunsetMoment = PlainDate.from(toLocalDate).get(sunset).get()
+    private fun getSunSetMoment(date: LocalDate, sunset: ChronoFunction<CalendarDate, Optional<Moment>>): Moment {
+        val sunsetMoment = PlainDate.from(date).get(sunset).get()
         return sunsetMoment
     }
 
@@ -165,7 +181,4 @@ object MainFromTabSeparated {
         return Utils.getDoubleFromJson(cloudCover)
     }
 
-    fun r(s: Double): String {
-        return String.format("%.2f", s)
-    }
 }
