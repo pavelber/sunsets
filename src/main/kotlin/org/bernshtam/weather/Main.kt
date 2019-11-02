@@ -35,6 +35,10 @@ object Main {
                             |"Ashdod":{ "lat":31.80, "long":34.65},
                             |"Herzlia":{ "lat":32.16, "long":34.84},
                             |"Palmachim":{ "lat":31.93, "long":34.70}
+                            |"Tel Aviv":{ "lat":32.08, "long":34.78}
+                            |"Haifa":{ "lat":32.79, "long":34.98}
+                            |"Ashkelon":{ "lat":31.66, "long":34.57}
+                            |"Netania":{ "lat":32.32, "long":34.85}
                             |}
                         """.trimMargin())
                 }
