@@ -12,7 +12,7 @@ import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 
-object NTLM {
+object IMSStreamProvider {
     private val httpclient = HttpClients.createDefault()
 
     private val credsProvider = BasicCredentialsProvider()

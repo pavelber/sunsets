@@ -6,6 +6,8 @@ import com.beust.klaxon.Parser
 import java.io.StringReader
 
 object TAFWrapper {
+    private val parser = Parser.default()
+
     fun getCloudsAlt(p: PointAtTime): Int? {
         var json = DB.get(p, "taf")
         if (json == null) {
@@ -13,7 +15,7 @@ object TAFWrapper {
             DB.putToDB(p, json, "taf")
         }
 
-        return if (json != null && json !="null") getTAFCloudsAltitudeInMeters(Parser.default().parse(StringReader(json)) as JsonObject) else null
+        return if (json != null && json !="null") getTAFCloudsAltitudeInMeters(parser.parse(StringReader(json)) as JsonObject) else null
     }
 
     @Suppress("UNCHECKED_CAST")

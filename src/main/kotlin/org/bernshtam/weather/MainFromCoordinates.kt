@@ -12,7 +12,8 @@ object MainFromCoordinates {
         DB.migrate()
         val lat = 32.08
         val long = 34.78
-        println(getMarkAndDescription(lat, long, LocalDate.now().minusDays(2)))
+        println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(1)))
+        println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(2)))
         DB.shutdown()
     }
 
