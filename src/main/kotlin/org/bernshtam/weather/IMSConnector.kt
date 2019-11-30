@@ -63,6 +63,6 @@ object IMSConnector {
                 continue;
             }
         }
-        throw IllegalArgumentException("Can't fine a file")
+        throw IllegalArgumentException("Can't find a file")
     }
 }

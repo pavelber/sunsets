@@ -109,25 +109,31 @@ object SunSetService {
     }
 
     private fun getPointsFromClouds(imsClouds: IMSClouds, cloudCover5Min: Double?, cloudCover10Min: Double?): PointsFromClouds {
-        val max = 8
-        var points = 0
+        println(imsClouds)
+        val max = 16
+
         val coefFrom5MinsLighting = if (cloudCover5Min == null || cloudCover5Min > 0.6) 0 else if (cloudCover5Min > 0.3) 1 else 2
         val coefFrom10MinsLighting = if (cloudCover10Min == null || cloudCover10Min > 0.6) 0 else if (cloudCover10Min > 0.3) 1 else 2
         val coefFromLighting = coefFrom5MinsLighting + coefFrom10MinsLighting
+        val haveClouds = imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0
         if (imsClouds.low > 0.5) return PointsFromClouds(0, max, true, true, false)
         else {
-            points = if (imsClouds.low > 0.2) 1 else 2
+            val points = if (imsClouds.low > 0.2) 1 else 2
             if (imsClouds.medium > 0.5) return PointsFromClouds(points * coefFromLighting, max, true, true, coefFromLighting > 0)
             else {
-                points = if (imsClouds.medium > 0.2) 1 else 2
+
                 if (imsClouds.high > 0.5) return PointsFromClouds(4 * coefFromLighting, max, true, true, coefFromLighting > 0)
                 else {
                     if (imsClouds.high > 0.2) return PointsFromClouds(3 * coefFromLighting, max, false, true, coefFromLighting > 0)
-                    else return PointsFromClouds(points * coefFromLighting, max, false, imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0, coefFromLighting > 0)
+                    else if (imsClouds.high == 0.0) return PointsFromClouds((if (haveClouds) 1 else 0) * coefFromLighting, max, false, imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0, coefFromLighting > 0)
+                    else {
+                        return PointsFromClouds(2 * coefFromLighting, max, false, haveClouds, coefFromLighting > 0)
+                    }
                 }
             }
         }
     }
+
 
     data class PointsFromClouds(val points: Int, val maxPoints: Int, val heavyClouds: Boolean, val haveClouds: Boolean, val lightOnClouds: Boolean)
 
