@@ -18,6 +18,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
+import kotlin.math.roundToInt
 
 object SunSetService {
 
@@ -49,7 +50,9 @@ object SunSetService {
                                      markAndDescription ->
             MarkAndDescription(date.format(dateTimeFormatter), acc.mark + markAndDescription.mark, acc.maxMark + markAndDescription.maxMark, reduceDescription(acc, markAndDescription))
         }
-        return result
+        val normalization = 100.0 / result.maxMark
+        val normalizedMark = (result.mark * normalization).roundToInt()
+        return MarkAndDescription(result.date, normalizedMark, 100, result.description)
     }
 
     private fun reduceDescription(acc: MarkAndDescription, markAndDescription: MarkAndDescription) =
@@ -108,18 +111,19 @@ object SunSetService {
     private fun getPointsFromClouds(imsClouds: IMSClouds, cloudCover5Min: Double?, cloudCover10Min: Double?): PointsFromClouds {
         val max = 8
         var points = 0
-        val coefFromLighting = (if (cloudCover5Min == null || cloudCover5Min > 0.6) 0 else if (cloudCover5Min > 0.3) 1 else 2)
-        +(if (cloudCover10Min == null || cloudCover10Min > 0.6) 0 else if (cloudCover10Min > 0.3) 1 else 2)
+        val coefFrom5MinsLighting = if (cloudCover5Min == null || cloudCover5Min > 0.6) 0 else if (cloudCover5Min > 0.3) 1 else 2
+        val coefFrom10MinsLighting = if (cloudCover10Min == null || cloudCover10Min > 0.6) 0 else if (cloudCover10Min > 0.3) 1 else 2
+        val coefFromLighting = coefFrom5MinsLighting + coefFrom10MinsLighting
         if (imsClouds.low > 0.5) return PointsFromClouds(0, max, true, true, false)
         else {
             points = if (imsClouds.low > 0.2) 1 else 2
-            if (imsClouds.medium > 0.5)  return PointsFromClouds(points * coefFromLighting , max, true, true, coefFromLighting>0)
+            if (imsClouds.medium > 0.5) return PointsFromClouds(points * coefFromLighting, max, true, true, coefFromLighting > 0)
             else {
                 points = if (imsClouds.medium > 0.2) 1 else 2
-                if (imsClouds.high > 0.5)  return PointsFromClouds(4 * coefFromLighting , max, true, true, coefFromLighting>0)
+                if (imsClouds.high > 0.5) return PointsFromClouds(4 * coefFromLighting, max, true, true, coefFromLighting > 0)
                 else {
-                    if (imsClouds.high > 0.2)  return PointsFromClouds(3 * coefFromLighting , max, false, true, coefFromLighting>0)
-                    else return PointsFromClouds(points * coefFromLighting , max, false, imsClouds.low>0.0||imsClouds.medium>0.0||imsClouds.high>0.0, coefFromLighting>0)
+                    if (imsClouds.high > 0.2) return PointsFromClouds(3 * coefFromLighting, max, false, true, coefFromLighting > 0)
+                    else return PointsFromClouds(points * coefFromLighting, max, false, imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0, coefFromLighting > 0)
                 }
             }
         }
@@ -137,11 +141,14 @@ object SunSetService {
         val pointAtSunsetHorizonClouds2 = getPointAfterKm(sunsetMoment, lat, long, 100.0)
         val (cloudsAtHorizonClouds2, pressureAtHorizonClouds2, visibilityAtHorizonClouds2) = getDarkSkyDataAtPoint(pointAtSunsetHorizonClouds2)
 
+        if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 == 0.0) points += 6
         if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 >= 0.2 && cloudsAtHorizonClouds2 <= 0.7) points += 2
 
         val description = if (points > 0) "Nice clouds near horizon." else ""
 
-        return MarkAndDescription("", points, 4, description)
+        val FACTOR = 4
+
+        return MarkAndDescription("", FACTOR * points, FACTOR * 8, description)
     }
 
     private fun getDataAtPoint(pointAtTime: PointAtTime): DataAtPoint {
