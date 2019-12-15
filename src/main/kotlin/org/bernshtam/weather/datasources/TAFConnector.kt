@@ -1,8 +1,10 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.datasources
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import org.bernshtam.weather.PointAtTime
+import org.bernshtam.weather.utils.TokenManager
 import java.io.StringReader
 import java.net.HttpURLConnection
 import java.net.URL

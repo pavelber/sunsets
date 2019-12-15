@@ -1,4 +1,4 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.datasources
 
 import org.apache.http.HttpHost
 import org.apache.http.auth.AuthScope
@@ -7,6 +7,7 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClients
+import org.bernshtam.weather.utils.TokenManager
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException

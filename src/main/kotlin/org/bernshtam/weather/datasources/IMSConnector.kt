@@ -1,7 +1,8 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.datasources
 
 import com.beust.klaxon.JsonObject
 import mt.edu.um.cf2.jgribx.GribFile
+import org.bernshtam.weather.PointAtTime
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime

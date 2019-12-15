@@ -102,6 +102,6 @@ object DB {
         val updatedHoursAgo = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS)
         return if (DateUtils.isSameDay(nowDate, requestDate))
             updatedHoursAgo > 0 // today update every hour
-        else updatedHoursAgo > 6 // future update each 6 hours
+        else updatedHoursAgo > 3 // future update each 6 hours
     }
 }

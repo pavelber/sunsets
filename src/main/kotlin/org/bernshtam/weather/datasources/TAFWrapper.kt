@@ -1,8 +1,10 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.datasources
 
 import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import org.bernshtam.weather.DB
+import org.bernshtam.weather.PointAtTime
 import java.io.StringReader
 
 object TAFWrapper {

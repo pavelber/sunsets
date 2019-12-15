@@ -1,7 +1,10 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.datasources
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import org.bernshtam.weather.DB
+import org.bernshtam.weather.IMSClouds
+import org.bernshtam.weather.PointAtTime
 import java.io.StringReader
 
 object IMSWrapper {
@@ -20,9 +23,9 @@ object IMSWrapper {
     @Suppress("UNCHECKED_CAST")
     fun getIMSClouds(json: JsonObject): IMSClouds {
         return IMSClouds(
-                (json[IMSConnector.HIGH_CLOUDS_PARAM] as Double)/100.0,
-                (json[IMSConnector.MEDIUM_CLOUDS_PARAM] as Double)/100.0,
-                (json[IMSConnector.LOW_CLOUDS_PARAM] as Double)/100.0
+                (json[IMSConnector.HIGH_CLOUDS_PARAM] as Double) / 100.0,
+                (json[IMSConnector.MEDIUM_CLOUDS_PARAM] as Double) / 100.0,
+                (json[IMSConnector.LOW_CLOUDS_PARAM] as Double) / 100.0
         )
     }
 }

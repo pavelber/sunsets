@@ -1,5 +1,6 @@
 package org.bernshtam.weather
 
+import com.beust.klaxon.JsonObject
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
@@ -15,6 +16,8 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        DataRetrievalSchedulers.runSchedulers()
+
         val server = embeddedServer(Netty, port = 8080) {
             install(ContentNegotiation) {
                 jackson {
@@ -31,16 +34,7 @@ object Main {
                     else call.respond(SunSetService.getMarkAndDescription(lat, long))
                 }
                 get("/locations") {
-                    call.respond("""{ 
-                            |"Ashdod":{ "lat":31.80, "long":34.65},
-                            |"Herzlia":{ "lat":32.16, "long":34.84},
-                            |"Palmachim":{ "lat":31.93, "long":34.70},
-                            |"Tel Aviv":{ "lat":32.08, "long":34.78},
-                            |"Haifa":{ "lat":32.79, "long":34.98},
-                            |"Ashkelon":{ "lat":31.66, "long":34.57},
-                            |"Netania":{ "lat":32.32, "long":34.85}
-                            |}
-                        """.trimMargin())
+                    call.respond(JsonObject(Place.PLACES.mapValues { p -> mapOf("lat" to p.value.lat, "long" to p.value.long) }).toJsonString())
                 }
             }
         }

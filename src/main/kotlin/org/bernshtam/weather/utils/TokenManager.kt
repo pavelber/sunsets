@@ -1,4 +1,4 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.utils
 
 import java.util.*
 

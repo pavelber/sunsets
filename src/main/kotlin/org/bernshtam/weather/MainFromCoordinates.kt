@@ -10,9 +10,10 @@ object MainFromCoordinates {
     @JvmStatic
     fun main(args: Array<String>) {
         DB.migrate()
-        val lat = 31.9
-        val long = 34.7
-        println(getMarkAndDescription(lat, long, LocalDate.now()))
+        val lat = 32.5
+        val long = 34.5
+        val place = Place.PLACES.getValue("Tel Aviv")
+        println(getMarkAndDescription(place.lat,place.long, LocalDate.now()))
         //    println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(1)))
         //    println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(2)))
         DB.shutdown()

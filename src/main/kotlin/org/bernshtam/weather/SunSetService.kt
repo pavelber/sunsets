@@ -12,6 +12,9 @@ import net.time4j.calendar.astro.SolarTime
 import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
+import org.bernshtam.weather.datasources.DataSkyWrapper
+import org.bernshtam.weather.datasources.IMSWrapper
+import org.bernshtam.weather.utils.Utils
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -88,6 +91,9 @@ object SunSetService {
         val (cloudCover5Min, pressure5Min, visibility5Min) = getDarkSkyDataAtPoint(point5Min)
         val (cloudCover10Min, pressure10Min, visibility10Min) = getDarkSkyDataAtPoint(point10Min)
 
+        println ("cloudCover near me: $cloudCover, $cloudCover10South, $cloudCover10North, $cloudCover10West")
+        println(" Cloud cover 5 min $cloudCover5Min, 10 min $cloudCover10Min")
+
         val pointsHere = getPointsFromClouds(cloudCover, cloudCover5Min, cloudCover10Min)
         val pointsSouth = getPointsFromClouds(cloudCover10South, cloudCover5Min, cloudCover10Min)
         val pointsNorth = getPointsFromClouds(cloudCover10North, cloudCover5Min, cloudCover10Min)
@@ -152,6 +158,7 @@ object SunSetService {
 
         val description = if (points > 0) "Nice clouds near horizon." else ""
 
+        println("Clouds near horizon: $cloudsAtHorizonClouds $cloudsAtHorizonClouds2")
         val FACTOR = 4
 
         return MarkAndDescription("", FACTOR * points, FACTOR * 8, description)
