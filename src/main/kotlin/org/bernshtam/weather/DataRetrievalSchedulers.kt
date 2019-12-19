@@ -5,12 +5,13 @@ import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 
 object DataRetrievalSchedulers {
+    private val service = SunSetService(true)
     fun runSchedulers() {
         (0 .. 2L).forEach { day ->
             Place.PLACES.values.forEach { p ->
                 val task = r {
                     try {
-                        SunSetService.getMarkAndDescription(p.lat, p.long, LocalDate.now().plusDays(day))
+                        service.getMarkAndDescription(p.lat, p.long, LocalDate.now().plusDays(day))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -18,7 +19,7 @@ object DataRetrievalSchedulers {
 
 
                 Scheduler(task,
-                        2, TimeUnit.HOURS).start()
+                        2*60, TimeUnit.MINUTES, day+1).start()
             }
         }
     }

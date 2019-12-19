@@ -10,10 +10,10 @@ import java.io.StringReader
 object IMSWrapper {
     private val parser = Parser.default()
 
-    fun getClouds(p: PointAtTime): IMSClouds {
+    fun getClouds(p: PointAtTime, goRemote: Boolean = true): IMSClouds {
         var json = DB.get(p, "ims")
         if (json == null) {
-            json = IMSConnector.getCloudsParams(p).toJsonString()
+            json = IMSConnector.getCloudsParams(p, goRemote).toJsonString()
             DB.putToDB(p, json, "ims")
         }
 

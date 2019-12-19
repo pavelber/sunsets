@@ -11,12 +11,14 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import org.bernshtam.weather.datasources.IMSStreamProvider
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
         DataRetrievalSchedulers.runSchedulers()
+        val service = SunSetService(false)
 
         val server = embeddedServer(Netty, port = 8080) {
             install(ContentNegotiation) {
@@ -31,7 +33,7 @@ object Main {
                     if (lat == null || long == null) call.respond(HttpStatusCode.BadRequest, "no latitude and longitude")
                     else if (long < 34.0 || long > 36.0) call.respond(HttpStatusCode.BadRequest, "working in israel only")
                     else if (lat < 29.5 || lat > 33.5) call.respond(HttpStatusCode.BadRequest, "working in israel only")
-                    else call.respond(SunSetService.getMarkAndDescription(lat, long))
+                    else call.respond(service.getMarkAndDescription(lat, long))
                 }
                 get("/locations") {
                     call.respond(JsonObject(Place.PLACES.mapValues { p -> mapOf("lat" to p.value.lat, "long" to p.value.long) }).toJsonString())

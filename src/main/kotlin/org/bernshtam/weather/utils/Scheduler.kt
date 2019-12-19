@@ -14,7 +14,6 @@ class Scheduler(private val task: Runnable, private val interval: Long, private 
 
     fun start() {
         try {
-            println("Scheduked")
             scheduler.scheduleWithFixedDelay(task, initialDelay, interval, timeUnit)
         } catch (e: Exception) {
             e.printStackTrace()

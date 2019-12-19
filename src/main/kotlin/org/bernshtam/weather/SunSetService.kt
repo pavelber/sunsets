@@ -23,14 +23,16 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.roundToInt
 
-object SunSetService {
+class SunSetService(private val goRemote: Boolean) {
 
-    private const val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
-    private val zoneId = ZoneId.of(zone)
-    private const val PATTERN = "dd/MM/yyy"
+    companion object {
+        private const val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
+        private val zoneId = ZoneId.of(zone)
+        private const val PATTERN = "dd/MM/yyy"
 
-    private val dateFormat = SimpleDateFormat(PATTERN)
-    private val dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN)
+        private val dateFormat = SimpleDateFormat(PATTERN)
+        private val dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN)
+    }
 
     fun getMarkAndDescription(lat: Double, long: Double): List<MarkAndDescription> {
         val today = LocalDate.now()
@@ -91,7 +93,7 @@ object SunSetService {
         val (cloudCover5Min, pressure5Min, visibility5Min) = getDarkSkyDataAtPoint(point5Min)
         val (cloudCover10Min, pressure10Min, visibility10Min) = getDarkSkyDataAtPoint(point10Min)
 
-        println ("cloudCover near me: $cloudCover, $cloudCover10South, $cloudCover10North, $cloudCover10West")
+        println("cloudCover near me: $cloudCover, $cloudCover10South, $cloudCover10North, $cloudCover10West")
         println(" Cloud cover 5 min $cloudCover5Min, 10 min $cloudCover10Min")
 
         val pointsHere = getPointsFromClouds(cloudCover, cloudCover5Min, cloudCover10Min)
@@ -167,7 +169,7 @@ object SunSetService {
     private fun getDataAtPoint(pointAtTime: PointAtTime): DataAtPoint {
         val (cloudCover, pressure, visibility) = getDarkSkyDataAtPoint(pointAtTime)
 
-        val clouds = IMSWrapper.getClouds(pointAtTime)
+        val clouds = IMSWrapper.getClouds(pointAtTime, goRemote)
         return DataAtPoint(clouds, pressure, visibility)
     }
 

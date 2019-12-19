@@ -3,6 +3,7 @@ package org.bernshtam.weather.datasources
 import org.apache.http.HttpHost
 import org.apache.http.auth.AuthScope
 import org.apache.http.auth.NTCredentials
+import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.BasicCredentialsProvider
@@ -18,43 +19,52 @@ object IMSStreamProvider {
 
     private val credsProvider = BasicCredentialsProvider()
     private val target = HttpHost("data.israel-meteo-service.org", 8080, "http")
-    private val context = HttpClientContext.create()
 
-    private val downloadDir = File(System.getProperty("java.io.tmpdir"),"ims")
+    private val downloadDir = File(System.getProperty("java.io.tmpdir"), "ims")
 
     private val user = TokenManager.get("ims.user")
     private val password = TokenManager.get("ims.password")
 
     init {
         credsProvider.setCredentials(
-            AuthScope.ANY,
-            NTCredentials(user, password, "", "data.israel-meteo-service.org")
-        );
-
+                AuthScope.ANY,
+                NTCredentials(user, password, "", "data.israel-meteo-service.org")
+        )
 
         // Make sure the same context is used to execute logically related requests
-        context.credentialsProvider = credsProvider
+
         downloadDir.mkdirs()
+    }
+
+    private fun getResponse(uri: String): CloseableHttpResponse {
+        val context = HttpClientContext.create()
+        context.credentialsProvider = credsProvider
+        val httpget = HttpGet(uri)
+        return httpclient.execute(target, httpget, context)
     }
 
     @JvmStatic
     fun main(args: Array<String>) {
-        val s = ""
+        val s = "C3_2019121900_CLCH.grb"
 
         // Execute a cheap method first. This will trigger NTLM authentication
         get(s)
 
     }
 
-    fun get(s: String): InputStream {
+    fun get(s: String, goRemote: Boolean = true): InputStream {
         val file = File(downloadDir, s)
         if (!file.exists()) {
-            val httpget = HttpGet("/ims/IMS_COSMO/$s")
-            val response = httpclient.execute(target, httpget, context)
+            if (!goRemote)
+                throw RuntimeException("No file")
+            val response = getResponse("/ims/IMS_COSMO/$s")
             response.use { r ->
-                if (r.statusLine.statusCode != 200) {
+                if (r.statusLine.statusCode == 404) {
                     val message = r.statusLine.toString()
                     throw IOException(message)
+                } else if (r.statusLine.statusCode != 200) {
+                    val message = r.statusLine.toString()
+                    throw RuntimeException(message)
                 }
                 val inputStream = r.entity.content
                 inputStream.use {
@@ -69,9 +79,9 @@ object IMSStreamProvider {
 
     private fun removeOldFiles() {
         try {
-            val files: List<File> = downloadDir.listFiles().toList().sortedBy { f->f.lastModified() }
+            val files: List<File> = downloadDir.listFiles().toList().sortedBy { f -> f.lastModified() }
             val toRemoveNum = files.size - 6
-            val toRemove = files.take(if (toRemoveNum>0) toRemoveNum else 0)
+            val toRemove = files.take(if (toRemoveNum > 0) toRemoveNum else 0)
             toRemove.forEach { it.delete() }
         } catch (e: Exception) {
             e.printStackTrace()

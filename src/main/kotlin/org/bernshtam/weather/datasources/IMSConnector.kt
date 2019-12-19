@@ -3,6 +3,7 @@ package org.bernshtam.weather.datasources
 import com.beust.klaxon.JsonObject
 import mt.edu.um.cf2.jgribx.GribFile
 import org.bernshtam.weather.PointAtTime
+import java.io.IOException
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -28,16 +29,16 @@ object IMSConnector {
         println(getCloudsParams(haifa).toJsonString(prettyPrint = true))
     }
 
-    fun getCloudsParams(pointAtTime: PointAtTime):JsonObject {
+    fun getCloudsParams(pointAtTime: PointAtTime, goRemote: Boolean = true): JsonObject {
         val paramMap = params.map { p ->
-            val value: Double = getValue(pointAtTime, p)
+            val value: Double = getValue(pointAtTime, p, goRemote)
             p.second to value
         }.toMap()
 
         return JsonObject(paramMap)
     }
 
-    private fun getValue(pointAtTime: PointAtTime, param: Pair<String, String>): Double {
+    private fun getValue(pointAtTime: PointAtTime, param: Pair<String, String>, goRemote: Boolean = true): Double {
         val fileDate = LocalDate.now()
         val yesterday = fileDate.minusDays(1)
         val dateStr = fileDate.format(dateTimeFormatter)
@@ -52,16 +53,18 @@ object IMSConnector {
         )
         for (pattern in patterns) {
             try {
-                val stream = IMSStreamProvider.get(pattern)
+                val stream = IMSStreamProvider.get(pattern, goRemote)
                 stream.use {
                     val file = GribFile(it)
                     val record = file.getRecord(GregorianCalendar.from(pointAtTime.time), paramName, "SFC")
                     return record.getValue(pointAtTime.lat, pointAtTime.long)
                 }
 
+            } catch (e: IOException) {
+                continue
             } catch (e: Exception) {
-                println(e.toString())
-                continue;
+                e.printStackTrace()
+                continue
             }
         }
         throw IllegalArgumentException("Can't find a file")
