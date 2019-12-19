@@ -13,7 +13,7 @@ import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
 import org.bernshtam.weather.datasources.DataSkyWrapper
-import org.bernshtam.weather.datasources.IMSWrapper
+import org.bernshtam.weather.datasources.IMSConnector
 import org.bernshtam.weather.utils.Utils
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -23,7 +23,7 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.roundToInt
 
-class SunSetService(private val goRemote: Boolean) {
+class SunSetService() {
 
     companion object {
         private const val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
@@ -103,6 +103,8 @@ class SunSetService(private val goRemote: Boolean) {
         val points = pointsHere.points + pointsSouth.points + pointsNorth.points + pointsWest.points * 3
         val maxPoints = pointsHere.maxPoints + pointsSouth.maxPoints + pointsNorth.maxPoints + pointsWest.maxPoints * 3
         val clouds = pointsHere.haveClouds || pointsSouth.haveClouds || pointsNorth.haveClouds || pointsWest.haveClouds
+        val notLowClouds = cloudCover.medium > 0.1 || cloudCover.high > 0.1 || cloudCover10South.medium > 0.1 || cloudCover10South.high > 0.1 ||
+                cloudCover10North.medium > 0.1 || cloudCover10North.high > 0.1 || cloudCover10West.medium > 0.1 || cloudCover10West.high > 0.1
         val heavyClouds = pointsHere.heavyClouds && pointsSouth.heavyClouds && pointsNorth.heavyClouds && pointsWest.heavyClouds
         val lightOnClouds = pointsHere.lightOnClouds || pointsSouth.lightOnClouds || pointsNorth.lightOnClouds || pointsWest.lightOnClouds
         var description = ""
@@ -110,7 +112,7 @@ class SunSetService(private val goRemote: Boolean) {
         else if (clouds) description += "Clouds above you. "
         else description += "Clear sky above you. "
 
-        if (lightOnClouds) description += "A chance for good light on clouds after sunset."
+        if (notLowClouds && lightOnClouds) description += "A chance for good light on clouds after sunset."
 
 
         return MarkAndDescription("", points, maxPoints, description)
@@ -169,7 +171,7 @@ class SunSetService(private val goRemote: Boolean) {
     private fun getDataAtPoint(pointAtTime: PointAtTime): DataAtPoint {
         val (cloudCover, pressure, visibility) = getDarkSkyDataAtPoint(pointAtTime)
 
-        val clouds = IMSWrapper.getClouds(pointAtTime, goRemote)
+        val clouds = IMSConnector.getCloudsParams(pointAtTime)
         return DataAtPoint(clouds, pressure, visibility)
     }
 

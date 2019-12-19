@@ -11,14 +11,13 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import org.bernshtam.weather.datasources.IMSStreamProvider
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
         DataRetrievalSchedulers.runSchedulers()
-        val service = SunSetService(false)
+        val service = SunSetService()
 
         val server = embeddedServer(Netty, port = 8080) {
             install(ContentNegotiation) {
