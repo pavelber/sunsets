@@ -93,51 +93,38 @@ class SunSetService() {
         val (cloudCover5Min, pressure5Min, visibility5Min) = getDarkSkyDataAtPoint(point5Min)
         val (cloudCover10Min, pressure10Min, visibility10Min) = getDarkSkyDataAtPoint(point10Min)
 
-        println("cloudCover near me: $cloudCover, $cloudCover10South, $cloudCover10North, $cloudCover10West")
-        println(" Cloud cover 5 min $cloudCover5Min, 10 min $cloudCover10Min")
-
-        val pointsHere = getPointsFromClouds(cloudCover, cloudCover5Min, cloudCover10Min)
-        val pointsSouth = getPointsFromClouds(cloudCover10South, cloudCover5Min, cloudCover10Min)
-        val pointsNorth = getPointsFromClouds(cloudCover10North, cloudCover5Min, cloudCover10Min)
-        val pointsWest = getPointsFromClouds(cloudCover10West, cloudCover5Min, cloudCover10Min)
-        val points = pointsHere.points + pointsSouth.points + pointsNorth.points + pointsWest.points * 3
-        val maxPoints = pointsHere.maxPoints + pointsSouth.maxPoints + pointsNorth.maxPoints + pointsWest.maxPoints * 3
-        val clouds = pointsHere.haveClouds || pointsSouth.haveClouds || pointsNorth.haveClouds || pointsWest.haveClouds
-        val notLowClouds = cloudCover.medium > 0.1 || cloudCover.high > 0.1 || cloudCover10South.medium > 0.1 || cloudCover10South.high > 0.1 ||
-                cloudCover10North.medium > 0.1 || cloudCover10North.high > 0.1 || cloudCover10West.medium > 0.1 || cloudCover10West.high > 0.1
-        val heavyClouds = pointsHere.heavyClouds && pointsSouth.heavyClouds && pointsNorth.heavyClouds && pointsWest.heavyClouds
-        val lightOnClouds = pointsHere.lightOnClouds || pointsSouth.lightOnClouds || pointsNorth.lightOnClouds || pointsWest.lightOnClouds
-        var description = ""
-        if (heavyClouds) description += "Heavy clouds in your area. "
-        else if (clouds) description += "Clouds above you. "
-        else description += "Clear sky above you. "
-
-        if (notLowClouds && lightOnClouds) description += "A chance for good light on clouds after sunset."
-
-
-        return MarkAndDescription("", points, maxPoints, description)
-    }
-
-    private fun getPointsFromClouds(imsClouds: IMSClouds, cloudCover5Min: Double?, cloudCover10Min: Double?): PointsFromClouds {
-        println(imsClouds)
-        val max = 16
+        val low = (cloudCover.low + cloudCover10South.low + cloudCover10North.low + cloudCover10West.low * 3) / 5.0
+        val medium = (cloudCover.medium + cloudCover10South.medium + cloudCover10North.medium + cloudCover10West.medium * 3) / 5.0
+        val high = (cloudCover.high + cloudCover10South.high + cloudCover10North.high + cloudCover10West.high * 3) / 5.0
 
         val coefFrom5MinsLighting = if (cloudCover5Min == null || cloudCover5Min > 0.6) 0 else if (cloudCover5Min > 0.3) 1 else 2
         val coefFrom10MinsLighting = if (cloudCover10Min == null || cloudCover10Min > 0.6) 0 else if (cloudCover10Min > 0.3) 1 else 2
         val coefFromLighting = coefFrom5MinsLighting + coefFrom10MinsLighting
-        val haveClouds = imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0
-        if (imsClouds.low > 0.5) return PointsFromClouds(0, max, true, true, false)
+
+        val highClouds = low < 0.5 && medium < 0.5 && high > 0.2
+        val notLowClouds = low < 0.5 && (medium > 0.0 || high > 0.0)
+        val lightDescription = when {
+            coefFromLighting > 2 && highClouds -> "An excellent chance for good light on clouds after sunset."
+            coefFromLighting > 0 && notLowClouds -> "A chance for good light on clouds after sunset."
+            else -> ""
+
+        }
+        val cloudsDescriptions = "Low clouds: ${(100 * low).toInt()}. Medium clouds: ${(100 * medium).toInt()}. High clouds: ${(100 * high).toInt()}."
+        val description = "$cloudsDescriptions $lightDescription"
+
+        val max = 16
+        if (low > 0.5) return MarkAndDescription("", 0, max, description)
         else {
-            val points = if (imsClouds.low > 0.2) 1 else 2
-            if (imsClouds.medium > 0.5) return PointsFromClouds(points * coefFromLighting, max, true, true, coefFromLighting > 0)
+
+            if (medium > 0.5) return MarkAndDescription("", 2 * coefFromLighting, max, description)
             else {
 
-                if (imsClouds.high > 0.5) return PointsFromClouds(4 * coefFromLighting, max, true, true, coefFromLighting > 0)
+                if (high > 0.5) return MarkAndDescription("", 4 * coefFromLighting, max, description)
                 else {
-                    if (imsClouds.high > 0.2) return PointsFromClouds(3 * coefFromLighting, max, false, true, coefFromLighting > 0)
-                    else if (imsClouds.high == 0.0) return PointsFromClouds((if (haveClouds) 1 else 0) * coefFromLighting, max, false, imsClouds.low > 0.0 || imsClouds.medium > 0.0 || imsClouds.high > 0.0, coefFromLighting > 0)
+                    if (high > 0.2) return MarkAndDescription("", 3 * coefFromLighting, max, description)
+                    else if (high == 0.0) return MarkAndDescription("", (if (medium > 0.2) 1 else 0) * coefFromLighting, max, description)
                     else {
-                        return PointsFromClouds(2 * coefFromLighting, max, false, haveClouds, coefFromLighting > 0)
+                        return MarkAndDescription("", 2 * coefFromLighting, max, description)
                     }
                 }
             }
@@ -145,25 +132,38 @@ class SunSetService() {
     }
 
 
-    data class PointsFromClouds(val points: Int, val maxPoints: Int, val heavyClouds: Boolean, val haveClouds: Boolean, val lightOnClouds: Boolean)
-
     private fun getCloudsNearHorizon(sunsetMoment: Moment, lat: Double, long: Double): MarkAndDescription {
         var points = 0
         val pointAtSunsetHorizonClouds = getPointAfterKm(sunsetMoment, lat, long, 50.0)
         val (cloudsAtHorizonClouds, pressureAtHorizonClouds, visibilityAtHorizonClouds) = getDarkSkyDataAtPoint(pointAtSunsetHorizonClouds)
-
-        if (cloudsAtHorizonClouds != null && cloudsAtHorizonClouds >= 0.2 && cloudsAtHorizonClouds <= 0.7) points += 2
+        var description = ""
+        if (cloudsAtHorizonClouds != null)
+            when {
+                cloudsAtHorizonClouds < 0.2 -> description += " A little or no clouds on the west."
+                cloudsAtHorizonClouds in 0.2..0.7 -> {
+                    points += 4;description += " Clouds on the west."
+                }
+                else -> {
+                    points += 2; description += " Heavy clouds on the west."
+                }
+            }
 
         val pointAtSunsetHorizonClouds2 = getPointAfterKm(sunsetMoment, lat, long, 100.0)
         val (cloudsAtHorizonClouds2, pressureAtHorizonClouds2, visibilityAtHorizonClouds2) = getDarkSkyDataAtPoint(pointAtSunsetHorizonClouds2)
 
-        if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 == 0.0) points += 6
-        if (cloudsAtHorizonClouds2 != null && cloudsAtHorizonClouds2 >= 0.2 && cloudsAtHorizonClouds2 <= 0.7) points += 2
+        if (cloudsAtHorizonClouds2 != null) when {
+            cloudsAtHorizonClouds2 == 0.0 -> {
+                points += 6; description += " Clear sky on the sunset point."
+            }
+            cloudsAtHorizonClouds2 in 0.2..0.7 -> {
+                points += 2; description += " Clouds on the sunset point."
+            }
+            else -> {
+                description += " Heavy clouds on the sunset point."
+            }
 
-        val description = if (points > 0) "Nice clouds near horizon." else ""
-
-        println("Clouds near horizon: $cloudsAtHorizonClouds $cloudsAtHorizonClouds2")
-        val FACTOR = 4
+        }
+        val FACTOR = 1
 
         return MarkAndDescription("", FACTOR * points, FACTOR * 8, description)
     }
