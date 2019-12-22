@@ -72,7 +72,8 @@ var geojsonObject = {
 };
 
 var source = new VectorSource({
-  features: new GeoJSON().readFeatures(geojsonObject)
+    url: 'file://',
+    format: new GeoJSON()
 });
 
 var styleFunction = function(feature, resolution) {
@@ -102,7 +103,7 @@ var map = new Map({
   ],
   target: "map",
   view: new View({
-    center: [0, 3000000],
-    zoom: 2
+    center: [4000000, 3800000],
+        zoom: 6
   })
 });
