@@ -5,6 +5,8 @@ import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.resources
+import io.ktor.http.content.static
 import io.ktor.jackson.jackson
 import io.ktor.response.respond
 import io.ktor.routing.get
@@ -25,6 +27,9 @@ object Main {
                 }
             }
             routing {
+                static("static") {
+                    resources("html")
+                }
                 get("/sunset") {
                     val request = call.request
                     val lat = request.queryParameters["lat"]?.toDouble()
@@ -36,6 +41,29 @@ object Main {
                 }
                 get("/locations") {
                     call.respond(JsonObject(Place.PLACES.mapValues { p -> mapOf("lat" to p.value.lat, "long" to p.value.long) }).toJsonString())
+                }
+                get("/source") {
+                    call.respond("""
+           {
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "EPSG:3857"
+    }
+  }, 
+                "features":[
+    {
+      "type": "Feature",
+      "properties": { "color": "rgba(0, 0, 255,0.4)" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[-5e6, 6e6], [-5e6, 8e6], [-3e6, 8e6], [-3e6, 6e6], [-5e6, 6e6]]
+        ]
+      }
+    }
+  ]}""".trimIndent())
                 }
             }
         }

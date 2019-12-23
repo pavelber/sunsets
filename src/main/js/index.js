@@ -72,7 +72,7 @@ var geojsonObject = {
 };
 
 var source = new VectorSource({
-    url: 'file://',
+    url: 'http://localhost:8080/source',
     format: new GeoJSON()
 });
 
