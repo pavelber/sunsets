@@ -16,8 +16,11 @@ var source = new VectorSource({
 });
 
 var styleFunction = function(feature, resolution) {
-
   return new Style({
+    stroke: new Stroke({
+      color: "blue",
+      width: 1
+    }),
     fill: new Fill({
       color: feature.getProperties()["color"]
     })
@@ -38,7 +41,7 @@ var map = new Map({
   ],
   target: "map",
   view: new View({
-    center: [32.0, 38.00],
+    center: [4000000, 3800000],
         zoom: 6
   })
 });

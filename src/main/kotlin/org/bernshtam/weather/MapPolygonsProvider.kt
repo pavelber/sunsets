@@ -27,19 +27,19 @@ object MapPolygonsProvider {
             JsonObject().also {
                 it["type"] = "Feature"
                 it["properties"] = JsonObject().also { p ->
-                    p["color"] = "rgba(0, 0, 255, ${c.high/100.0})"
+                    p["color"] = "rgba(0, 0, 255, ${c.high / 100.0})"
                 }//"""{ "color": "rgba(0, 0, 255, ${c.high})" }"""
                 it["geometry"] = JsonObject().also { g ->
                     g["type"] = "Polygon"
-                    g["coordinates"] = JsonArray(
-                            JsonArray(listOf(c.latitude - c.square_size / 2, c.longitude - c.square_size / 2)),
-                            JsonArray(listOf(c.latitude - c.square_size / 2, c.longitude + c.square_size / 2)),
-                            JsonArray(listOf(c.latitude + c.square_size / 2, c.longitude + c.square_size / 2)),
-                            JsonArray(listOf(c.latitude + c.square_size / 2, c.longitude - c.square_size / 2)),
-                            JsonArray(listOf(c.latitude - c.square_size / 2, c.longitude - c.square_size / 2)))
+                    g["coordinates"] = JsonArray(listOf(JsonArray(listOf(
+                            JsonArray(listOf(c.longitude - c.square_size / 2, c.latitude - c.square_size / 2)),
+                            JsonArray(listOf(c.longitude + c.square_size / 2, c.latitude - c.square_size / 2)),
+                            JsonArray(listOf(c.longitude + c.square_size / 2, c.latitude + c.square_size / 2)),
+                            JsonArray(listOf(c.longitude - c.square_size / 2, c.latitude + c.square_size / 2)),
+                            JsonArray(listOf(c.longitude - c.square_size / 2, c.latitude - c.square_size / 2))))))
                 }
             }
-        }.joinToString(separator = ",", prefix = "[", postfix = "]")    { it.toJsonString() }
+        }.joinToString(separator = ",", prefix = "[", postfix = "]") { it.toJsonString() }
     }
 /*[
 {
