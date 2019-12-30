@@ -111,10 +111,9 @@ class SunSetService() {
         val description = "$cloudsDescriptions $lightDescription"
 
         val max = 16
-        if (low > 0.5) return MarkAndDescription("", 0, max, description)
+        if (low > 0.2) return MarkAndDescription("", 0, max, description)
         else {
-
-            if (medium > 0.5) return MarkAndDescription("", 2 * coefFromLighting, max, description)
+            if (medium > 0.2) return MarkAndDescription("", 1 * coefFromLighting, max, description)
             else {
 
                 if (high > 0.5) return MarkAndDescription("", 4 * coefFromLighting, max, description)
