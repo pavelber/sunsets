@@ -5,6 +5,7 @@ import org.apache.commons.lang.time.DateUtils
 import org.flywaydb.core.Flyway
 import java.sql.Connection
 import java.sql.Timestamp
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -142,6 +143,35 @@ object DB {
             insertCellStatement.setDouble(int++, cell.sun_blocking_5)
             insertCellStatement.setDouble(int++, cell.sun_blocking_10)
             insertCellStatement.executeUpdate()
+        }
+    }
+
+    fun getCells(date: LocalDate): List<Cell> {
+        getConnection().use { connection ->
+            connection.createStatement().use { statement ->
+
+                val resultSet = statement.executeQuery(
+                        """select date,square_size, latitude,longitude,low, medium, high, sunset_near, sunset_far, sun_blocking_5,sun_blocking_10  
+                            |from cell where date = '$date'""".trimMargin())
+                resultSet.use {
+                    return generateSequence {
+                        var i = 1
+                        if (resultSet.next())
+                            Cell(resultSet.getDate(i++).toLocalDate(),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++),
+                                    resultSet.getDouble(i++)
+                            ) else null
+                    }.toList()
+                }
+            }
         }
     }
 }

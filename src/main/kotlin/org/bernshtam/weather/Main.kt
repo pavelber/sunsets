@@ -39,7 +39,7 @@ object Main {
                     LocationsProvider.handle(call)
                 }
                 get("/source") {
-
+                    MapPolygonsProvider.handle(call)
                 }
             }
         }

@@ -38,7 +38,7 @@ var map = new Map({
   ],
   target: "map",
   view: new View({
-    center: [4000000, 3800000],
+    center: [32.0, 38.00],
         zoom: 6
   })
 });
