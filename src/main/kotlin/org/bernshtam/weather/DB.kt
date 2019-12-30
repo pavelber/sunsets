@@ -37,11 +37,11 @@ object DB {
         cpds.close()
     }
 
-    fun getConnection(): Connection {
+    private fun getConnection(): Connection {
         return cpds.connection
     }
 
-    fun putToDB(p: PointAtTime, json: String?, source:String) {
+    fun putToDB(p: PointAtTime, json: String?, source: String) {
         getConnection().use { connection ->
             connection.autoCommit = true
             connection.createStatement().use { statement ->
@@ -55,7 +55,7 @@ object DB {
                         WHEN NOT MATCHED THEN insert  VALUES $lat,$long,$time,'$json',cast(TIMESTAMP ($time) as date), now(), '$source'
                         WHEN MATCHED THEN update set json = '$json', update_time = now()
                         """
-               // println(sql)
+                // println(sql)
                 statement.execute(sql)
 
             }
@@ -63,14 +63,14 @@ object DB {
 
     }
 
-    fun get(p: PointAtTime, source:String): String? {
+    fun get(p: PointAtTime, source: String): String? {
         getConnection().use { connection ->
             connection.createStatement().use { statement ->
 
                 val lat = (p.lat * 1000).toInt()
                 val long = (p.long * 1000).toInt()
                 val time = p.getLocalTime()
-             //   println("select json from darksky where latitude = $lat and longitude = $long and time = $time")
+                //   println("select json from darksky where latitude = $lat and longitude = $long and time = $time")
                 val resultSet = statement.executeQuery("select json,update_time from cache where latitude = $lat and longitude = $long and time = $time and source = '$source'")
                 resultSet.use {
                     return if (it.next())
@@ -83,6 +83,7 @@ object DB {
 
         }
     }
+
     fun shutdown() {
         getConnection().use { connection ->
             connection.createStatement().use { statement ->
@@ -90,6 +91,7 @@ object DB {
             }
         }
     }
+
     private fun shouldUpdate(time: Long, timestamp: Timestamp): Boolean {
         val nowDate = Date()
         val requestDate = Date(time * 1000)
@@ -103,5 +105,43 @@ object DB {
         return if (DateUtils.isSameDay(nowDate, requestDate))
             updatedHoursAgo > 0 // today update every hour
         else updatedHoursAgo > 3 // future update each 6 hours
+    }
+
+    fun saveCell(cell: Cell) {
+        getConnection().use { connection ->
+            val insertCellStatement = connection.prepareStatement(
+                    """
+                        MERGE INTO cell AS t USING (VALUES(?,?,?)) AS vals(date,latitude,longitude)
+                        ON t.latitude=vals.latitude AND t.longitude=vals.longitude and t.date = vals.date
+                        WHEN NOT MATCHED THEN  
+                            INSERT values ?, ?, ? , ?, ?, ?, ?, ?, ?, ?, ?
+                        WHEN MATCHED THEN update set low = ?, medium = ?, high = ?, sunset_near = ?, sunset_far= ?, sun_blocking_5 = ?, sun_blocking_10 = ?
+                         """)
+
+
+            var int = 1
+            insertCellStatement.setDate(int++, java.sql.Date.valueOf(cell.date))
+            insertCellStatement.setDouble(int++, cell.latitude)
+            insertCellStatement.setDouble(int++, cell.longitude)
+            insertCellStatement.setDate(int++, java.sql.Date.valueOf(cell.date))
+            insertCellStatement.setDouble(int++, cell.square_size)
+            insertCellStatement.setDouble(int++, cell.latitude)
+            insertCellStatement.setDouble(int++, cell.longitude)
+            insertCellStatement.setDouble(int++, cell.low)
+            insertCellStatement.setDouble(int++, cell.medium)
+            insertCellStatement.setDouble(int++, cell.high)
+            insertCellStatement.setDouble(int++, cell.sunset_near)
+            insertCellStatement.setDouble(int++, cell.sunset_far)
+            insertCellStatement.setDouble(int++, cell.sun_blocking_5)
+            insertCellStatement.setDouble(int++, cell.sun_blocking_10)
+            insertCellStatement.setDouble(int++, cell.low)
+            insertCellStatement.setDouble(int++, cell.medium)
+            insertCellStatement.setDouble(int++, cell.high)
+            insertCellStatement.setDouble(int++, cell.sunset_near)
+            insertCellStatement.setDouble(int++, cell.sunset_far)
+            insertCellStatement.setDouble(int++, cell.sun_blocking_5)
+            insertCellStatement.setDouble(int++, cell.sun_blocking_10)
+            insertCellStatement.executeUpdate()
+        }
     }
 }

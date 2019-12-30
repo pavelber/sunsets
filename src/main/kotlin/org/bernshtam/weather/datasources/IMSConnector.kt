@@ -22,9 +22,9 @@ object IMSConnector {
 
         val json = JsonObject(paramMap)
         return IMSClouds(
-                json.double(IMSConstants.HIGH_CLOUDS_PARAM)!! / 100.0,
-                json.double(IMSConstants.MEDIUM_CLOUDS_PARAM)!! / 100.0,
-                json.double(IMSConstants.LOW_CLOUDS_PARAM)!! / 100.0
+                json.double(IMSConstants.HIGH_CLOUDS_PARAM_FILE)!! / 100.0,
+                json.double(IMSConstants.MEDIUM_CLOUDS_PARAM_FILE)!! / 100.0,
+                json.double(IMSConstants.LOW_CLOUDS_PARAM_FILE)!! / 100.0
         )
     }
 

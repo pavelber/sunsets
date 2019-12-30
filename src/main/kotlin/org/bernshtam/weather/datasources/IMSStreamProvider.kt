@@ -33,9 +33,7 @@ object IMSStreamProvider {
                 NTCredentials(user, password, "", "data.israel-meteo-service.org")
         )
 
-        // Make sure the same context is used to execute logically related requests
-
-        IMSConstants.downloadDir.mkdirs()
+        downloadDir.mkdirs()
     }
 
     fun redownload() {
@@ -70,6 +68,7 @@ object IMSStreamProvider {
         }
 
         removeOldFiles()
+        CellsCreator.recalclulate()
         IMSConnector.reopenGribFiles()
     }
 

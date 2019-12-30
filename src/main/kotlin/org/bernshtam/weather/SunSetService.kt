@@ -15,6 +15,7 @@ import net.time4j.engine.ChronoFunction
 import org.bernshtam.weather.datasources.DataSkyWrapper
 import org.bernshtam.weather.datasources.IMSConnector
 import org.bernshtam.weather.utils.Utils
+import org.bernshtam.weather.utils.Utils.getSunsetMoment
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
@@ -42,10 +43,7 @@ class SunSetService() {
     }
 
     fun getMarkAndDescription(lat: Double, long: Double, date: LocalDate): MarkAndDescription {
-        val place = SolarTime.ofLocation(lat, long)
-        val sunset = place.sunset()
-
-        val sunsetMoment = getSunSetMoment(date, sunset)
+        val sunsetMoment = getSunsetMoment(lat, long, date)
 
         val points = mutableListOf<MarkAndDescription>()
         points.add(getCloudsNearHorizon(sunsetMoment, lat, long))
@@ -216,10 +214,6 @@ class SunSetService() {
         return pointAtTime
     }
 
-    private fun getSunSetMoment(date: LocalDate, sunset: ChronoFunction<CalendarDate, Optional<Moment>>): Moment {
-        val sunsetMoment = PlainDate.from(date).get(sunset).get()
-        return sunsetMoment
-    }
 
     private fun current(darkSkyJsonOfSunSet: JsonObject, key: String): Double? {
         val current = darkSkyJsonOfSunSet["currently"] as JsonObject?

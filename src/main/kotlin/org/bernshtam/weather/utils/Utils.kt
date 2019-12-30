@@ -1,5 +1,13 @@
 package org.bernshtam.weather.utils
 
+import net.time4j.Moment
+import net.time4j.PlainDate
+import net.time4j.calendar.astro.SolarTime
+import net.time4j.engine.CalendarDate
+import net.time4j.engine.ChronoFunction
+import java.time.LocalDate
+import java.util.*
+
 object Utils {
 
      const val EARTH_RADIUS = 6731.0 // km
@@ -43,4 +51,18 @@ object Utils {
                 null -> null
                 else -> cStr.toString().toDouble()
             }
+
+
+    fun getSunsetMoment(lat: Double, long: Double, date: LocalDate): Moment {
+        val place = SolarTime.ofLocation(lat, long)
+        val sunset = place.sunset()
+
+        val sunsetMoment = getSunSetMoment(date, sunset)
+        return sunsetMoment
+    }
+
+    private fun getSunSetMoment(date: LocalDate, sunset: ChronoFunction<CalendarDate, Optional<Moment>>): Moment {
+        val sunsetMoment = PlainDate.from(date).get(sunset).get()
+        return sunsetMoment
+    }
 }
