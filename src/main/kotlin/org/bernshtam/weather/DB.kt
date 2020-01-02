@@ -164,6 +164,7 @@ object DB {
                                     resultSet.getDouble(i++),
                                     resultSet.getDouble(i++),
                                     resultSet.getDouble(i++),
+                                    0.0,
                                     resultSet.getDouble(i++),
                                     resultSet.getDouble(i++),
                                     resultSet.getDouble(i++),

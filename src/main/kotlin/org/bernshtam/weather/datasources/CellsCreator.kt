@@ -24,7 +24,7 @@ object CellsCreator {
         val today = LocalDate.now()
         (0L..2L).map { today.plus(it, ChronoUnit.DAYS) }
                 .forEach { date ->
-                    var lat = latStart+ AVERAGE_RADIUS
+                    var lat = latStart + AVERAGE_RADIUS
                     while (lat < latEnd) {
                         var long = longStart + AVERAGE_RADIUS
                         while (long < longEnd) {
@@ -34,11 +34,10 @@ object CellsCreator {
                             val low = getAverageValue(gribFiles.getValue(IMSConstants.LOW_CLOUDS_PARAM), calendar, IMSConstants.LOW_CLOUDS_PARAM_FILE, lat, long)
                             val medium = getAverageValue(gribFiles.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM), calendar, IMSConstants.MEDIUM_CLOUDS_PARAM_FILE, lat, long)
                             val high = getAverageValue(gribFiles.getValue(IMSConstants.HIGH_CLOUDS_PARAM), calendar, IMSConstants.HIGH_CLOUDS_PARAM_FILE, lat, long)
-                            val cell = Cell(date, cellSize, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0)
+                            val cell = Cell(date, cellSize, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0, 0.0)
                             try {
                                 DB.saveCell(cell)
-                                println("Saved $lat $long")
-                            } catch (e:Exception){
+                            } catch (e: Exception) {
                                 e.printStackTrace()
                             }
                             long += AVERAGE_RADIUS
@@ -53,9 +52,9 @@ object CellsCreator {
     private fun getAverageValue(gribFile: GribFile, calendar: GregorianCalendar, param: String, lat: Double, long: Double): Double {
         val record = gribFile.getRecord(calendar, param, "SFC")
         val here = record.getValue(lat, long)
-        val north = record.getValue(lat + AVERAGE_RADIUS/2, long)
-        val south = record.getValue(lat - AVERAGE_RADIUS/2, long)
-        val west = record.getValue(lat, long - AVERAGE_RADIUS/2)
+        val north = record.getValue(lat + AVERAGE_RADIUS / 2, long)
+        val south = record.getValue(lat - AVERAGE_RADIUS / 2, long)
+        val west = record.getValue(lat, long - AVERAGE_RADIUS / 2)
         return (here + north + south + AVERAGE_WEST_FACTOR * west) / (3 + AVERAGE_WEST_FACTOR)
     }
 
