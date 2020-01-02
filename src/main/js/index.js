@@ -13,14 +13,14 @@ let mapTypeGlobal = 'low';
 let geoJSON = new GeoJSON();
 
 var vectorLoader = function (extent, resolution, projection) {
-    var url = 'http://localhost:8080/source?day=' + dayGlobal + '&map=' + mapTypeGlobal;
+    var url = '/sunset/source?day=' + dayGlobal + '&map=' + mapTypeGlobal;
     var xmlhttp = new XMLHttpRequest();
 
     xmlhttp.onreadystatechange = function() {
 //        console.log(xmlhttp.readyState);
-        if (xmlhttp.readyState == XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
+        if (xmlhttp.readyState === XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
   //          console.log(xmlhttp.status);
-            if (xmlhttp.status == 200) {
+            if (xmlhttp.status === 200) {
                 let features = geoJSON.readFeatures( xmlhttp.responseText, {featureProjection: projection});
     //            console.log(features);
                 source.addFeatures(features);
