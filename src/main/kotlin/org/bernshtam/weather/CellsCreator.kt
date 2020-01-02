@@ -1,8 +1,7 @@
-package org.bernshtam.weather.datasources
+package org.bernshtam.weather
 
 import mt.edu.um.cf2.jgribx.GribFile
-import org.bernshtam.weather.Cell
-import org.bernshtam.weather.DB
+import org.bernshtam.weather.datasources.IMSConstants
 import org.bernshtam.weather.utils.Utils
 import java.io.FileInputStream
 import java.time.LocalDate
@@ -34,9 +33,9 @@ object CellsCreator {
                             val low = getAverageValue(gribFiles.getValue(IMSConstants.LOW_CLOUDS_PARAM), calendar, IMSConstants.LOW_CLOUDS_PARAM_FILE, lat, long)
                             val medium = getAverageValue(gribFiles.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM), calendar, IMSConstants.MEDIUM_CLOUDS_PARAM_FILE, lat, long)
                             val high = getAverageValue(gribFiles.getValue(IMSConstants.HIGH_CLOUDS_PARAM), calendar, IMSConstants.HIGH_CLOUDS_PARAM_FILE, lat, long)
-                            val cell = Cell(date, cellSize, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0, 0.0)
+                            val cell = Cell(date, cellSize, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0, 0.0,"")
                             try {
-                                DB.saveCell(cell)
+                                DB.saveLocalCloudsCell(cell)
                             } catch (e: Exception) {
                                 e.printStackTrace()
                             }
@@ -44,7 +43,6 @@ object CellsCreator {
                         }
                         lat += AVERAGE_RADIUS
                     }
-
                 }
     }
 

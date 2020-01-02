@@ -33,9 +33,10 @@ data class Cell(val date: LocalDate,
                 val low: Double,
                 val medium: Double,
                 val high: Double,
-                val rank: Double,
-                val sunset_near: Double,
-                val sunset_far: Double,
-                val sun_blocking_5: Double,
-                val sun_blocking_10: Double
+                var rank: Double,
+                var sunset_near: Double,
+                var sunset_far: Double,
+                var sun_blocking_near: Double,
+                var sun_blocking_far: Double,
+                var description: String
 )

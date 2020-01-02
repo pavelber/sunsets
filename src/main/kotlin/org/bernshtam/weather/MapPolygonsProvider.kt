@@ -16,7 +16,7 @@ object MapPolygonsProvider {
             "low" -> {c:Cell-> "0,0,0,${c.low}"}
             "medium" -> {c:Cell->"0,0,255,${c.medium}"}
             "high" -> {c:Cell-> "255,165,0,${c.high}"}
-            "sunset" -> {c:Cell-> "255,0,0,${c.rank}"}
+            "sunset" -> {c:Cell-> "255,0,0,${c.rank/100.0}"}
             else -> {c:Cell-> "0,0,0,${c.low}"}
         }
         val cells = DB.getCells(LocalDate.now().plusDays(day))

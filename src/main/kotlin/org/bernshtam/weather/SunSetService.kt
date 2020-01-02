@@ -15,6 +15,9 @@ import net.time4j.engine.ChronoFunction
 import org.bernshtam.weather.datasources.DataSkyWrapper
 import org.bernshtam.weather.datasources.IMSConnector
 import org.bernshtam.weather.utils.Utils
+import org.bernshtam.weather.utils.Utils.getPoint
+import org.bernshtam.weather.utils.Utils.getPointAfterKm
+import org.bernshtam.weather.utils.Utils.getPointAfterMinutes
 import org.bernshtam.weather.utils.Utils.getSunsetMoment
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -24,14 +27,12 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.roundToInt
 
-class SunSetService() {
+class SunSetService {
 
     companion object {
         private const val zone = "Asia/Jerusalem" //darkSkyForZone["timezone"] as String
-        private val zoneId = ZoneId.of(zone)
         private const val PATTERN = "dd/MM/yyy"
 
-        private val dateFormat = SimpleDateFormat(PATTERN)
         private val dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN)
     }
 
@@ -181,37 +182,6 @@ class SunSetService() {
         return DarkSkyDataAtPoint(cloudCover, pressureCover, visibility)
     }
 
-
-    private fun getPointAfterKm(sunsetMoment: Moment, lat: Double, long: Double, km: Double): PointAtTime {
-        val zonalDateTime = sunsetMoment.toLocalTimestamp().inLocalView()
-        val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
-                SunPosition.at(sunsetMoment, GeoLocation.of(lat, long)).azimuth, km * Utils.METERS_IN_KM)
-        val pointAtTimeOfClouds = PointAtTime.at(pointOfClouds.latitude, pointOfClouds.longitude, zonalDateTime.toTemporalAccessor())
-        return pointAtTimeOfClouds
-    }
-
-
-    private fun getPointAfterMinutes(sunsetMoment: Moment, minutesAfterSunset: Long, lat: Double, long: Double): PointAtTime {
-        val minsAfterSunsetMoment = sunsetMoment.plus(minutesAfterSunset * Utils.SECONDS_PER_MIN, SI.SECONDS)
-        val minsAfterSunsetPosition = SunPosition.at(minsAfterSunsetMoment, GeoLocation.of(lat, long))
-        val minsAfterZonalDateTime = minsAfterSunsetMoment.toLocalTimestamp().inLocalView()
-        //val heightToSeeAfterFeefteenMins = EARTH_RADIUS / (Math.cos(-minsAfterSunsetPosition.elevation * Math.PI / 180.0)) - EARTH_RADIUS
-        val angelAfterNMinutes = minutesAfterSunset * Utils.DEGREES / (Utils.MINUTES_PER_DAY)
-        val distanceOfAngle = 2 * Math.PI * Utils.EARTH_RADIUS * angelAfterNMinutes / Utils.DEGREES * Utils.METERS_IN_KM
-        val distanceToClouds = 2 * distanceOfAngle
-        //println(minutesAfterSunset.toString()+" "+distanceToClouds)
-        val pointOfClouds = EarthCalc.pointAt(Point.at(Coordinate.fromDegrees(lat), Coordinate.fromDegrees(long)),
-                minsAfterSunsetPosition.azimuth, distanceToClouds)
-        val pointAtTimeOfClouds = PointAtTime.at(pointOfClouds.latitude, pointOfClouds.longitude, minsAfterZonalDateTime.toTemporalAccessor())
-        return pointAtTimeOfClouds
-    }
-
-
-    private fun getPoint(sunsetMoment: Moment, lat: Double, long: Double): PointAtTime {
-        val zonalDateTime = sunsetMoment.toLocalTimestamp().inLocalView()
-        val pointAtTime = PointAtTime.at(lat, long, zonalDateTime.toTemporalAccessor())
-        return pointAtTime
-    }
 
 
     private fun current(darkSkyJsonOfSunSet: JsonObject, key: String): Double? {

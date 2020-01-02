@@ -14,14 +14,15 @@ import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import org.bernshtam.weather.utils.TokenManager
 
 object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
+        val prefix = TokenManager.get("api.prefix")
         DB.migrate()
         DataRetrievalSchedulers.runSchedulers()
-        val service = SunSetService()
 
         val server = embeddedServer(Netty, port = 8080) {
             install(ContentNegotiation) {
@@ -29,16 +30,16 @@ object Main {
                 }
             }
             routing {
-                static("static") {
+                static("$prefix/static") {
                     resources("html")
                 }
-                get("/sunset") {
+                get("$prefix/sunset") {
                     SunsetTextProvider.handle(call)
                 }
-                get("/locations") {
+                get("$prefix/locations") {
                     LocationsProvider.handle(call)
                 }
-                get("/source") {
+                get("$prefix/source") {
                     MapPolygonsProvider.handle(call)
                 }
             }

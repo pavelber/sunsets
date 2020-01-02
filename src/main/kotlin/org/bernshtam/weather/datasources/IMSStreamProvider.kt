@@ -8,12 +8,13 @@ import org.apache.http.client.methods.HttpGet
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.client.HttpClients
+import org.bernshtam.weather.CellsCreator
+import org.bernshtam.weather.FarCloudsCalculator
+import org.bernshtam.weather.RankCalculator
 import org.bernshtam.weather.datasources.IMSConstants.dateTimeFormatter
 import org.bernshtam.weather.datasources.IMSConstants.downloadDir
 import org.bernshtam.weather.utils.TokenManager
 import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
 import java.io.InputStream
 import java.time.LocalDate
 
@@ -68,8 +69,19 @@ object IMSStreamProvider {
         }
 
         removeOldFiles()
-        CellsCreator.recalclulate()
+        println("Old files removed")
         IMSConnector.reopenGribFiles()
+        println("Grib files reopened")
+        CellsCreator.recalclulate()
+        println("Cells recreated")
+        try {
+            FarCloudsCalculator.recalculate()
+        } catch (e: Exception) {
+            println("Skipped far cloud recalc: $e")
+        }
+        println("Far clouds recalculated")
+        RankCalculator.recalculate()
+        println("Ranks recalculated")
     }
 
 
