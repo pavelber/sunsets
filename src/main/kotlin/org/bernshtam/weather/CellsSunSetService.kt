@@ -10,12 +10,12 @@ object CellsSunSetService {
     private val dateTimeFormatter = DateTimeFormatter.ofPattern(PATTERN)
 
 
-    fun getMarkAndDescription(cell: Cell): MarkAndDescription {
+    fun getMarkAndDescription(cell: Cell, cS: Cell, cN: Cell, cW: Cell): MarkAndDescription {
         val date = cell.date
 
         val points = mutableListOf<MarkAndDescription>()
         points.add(getCloudsNearHorizon(cell))
-        points.add(getCloudsNearMe(cell))
+        points.add(getCloudsNearMe(cell, cS, cN, cW))
 
         val result = points.reduce { acc,
                                      markAndDescription ->
@@ -40,11 +40,11 @@ object CellsSunSetService {
                 else
                     "$acc $markAndDescription"
 
-    private fun getCloudsNearMe(c: Cell): MarkAndDescription {
+    private fun getCloudsNearMe(c: Cell, cS: Cell, cN: Cell, cW: Cell): MarkAndDescription {
 
-        val low = c.low
-        val medium = c.medium
-        val high = c.high
+        val low = (c.low + cS.low + cN.low + cW.low * 3) / 6.0
+        val medium = (c.medium + cS.medium + cN.medium + cW.medium * 3) / 6.0
+        val high = (c.high + cS.high + cN.high + cW.high * 3) / 6.0
 
         val coefFrom5MinsLighting = if (c.sun_blocking_near > 0.6) 0 else if (c.sun_blocking_near > 0.3) 1 else 2
         val coefFrom10MinsLighting = if (c.sun_blocking_far > 0.6) 0 else if (c.sun_blocking_far > 0.3) 1 else 2

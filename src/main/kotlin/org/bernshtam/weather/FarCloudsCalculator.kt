@@ -15,8 +15,9 @@ object FarCloudsCalculator {
         val cells = DB.getCells(now)
         val cells_1 = DB.getCells(now_1)
         val cells_2 = DB.getCells(now_2)
+        try {
         cells.forEach { c ->
-            try {
+
                 println(c)
                 val lat = c.latitude
                 val long = c.longitude
@@ -56,9 +57,9 @@ object FarCloudsCalculator {
                 DB.updateCell(c)
                 DB.updateCell(c_1)
                 DB.updateCell(c_2)
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
