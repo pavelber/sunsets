@@ -2,6 +2,7 @@ package org.bernshtam.weather.datasources
 
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Parser
+import com.google.common.util.concurrent.RateLimiter
 import org.bernshtam.weather.PointAtTime
 import org.bernshtam.weather.utils.TokenManager
 import java.io.StringReader
@@ -11,6 +12,7 @@ import java.net.URL
 object OpenWeatherConnector {
 
     private val secretKey = TokenManager.get("openweather.token")
+    private val rateLimiter =  RateLimiter.create(1.0)
 
     fun getJson(p: PointAtTime): JsonObject {
         val attempts = 3
@@ -27,8 +29,9 @@ object OpenWeatherConnector {
     }
 
     fun getJsonString(p: PointAtTime): String {
-        val url = URL("https://api.openweathermap.org/data/2.5/forecast?lat=${p.lat}&lon=${p.long}&APPID=$secretKey")
 
+        val url = URL("https://api.openweathermap.org/data/2.5/forecast?lat=${p.lat}&lon=${p.long}&APPID=$secretKey")
+        println(rateLimiter.acquire()>0.0)
         with(url.openConnection() as HttpURLConnection) {
           //  println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")
             require(responseCode == 200) { responseMessage }
