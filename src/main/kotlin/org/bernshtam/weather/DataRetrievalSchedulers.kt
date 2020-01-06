@@ -5,7 +5,7 @@ import org.bernshtam.weather.utils.Scheduler
 import java.util.concurrent.TimeUnit
 
 object DataRetrievalSchedulers {
-    private val service = SunSetService()
+
     fun runSchedulers() {
         val task = r { IMSStreamProvider.redownload() }
         Scheduler(task, 2 * 60, TimeUnit.MINUTES, 0).start()

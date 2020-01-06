@@ -14,9 +14,9 @@ object CellsCreator {
     private const val latEnd = 34.0
     private const val longStart = 34.0
     private const val longEnd = 36.0
-    private const val cellSize = 0.1
+
     private const val AVERAGE_WEST_FACTOR = 3
-    private const val AVERAGE_RADIUS = cellSize
+    private const val AVERAGE_RADIUS = CELL_SIZE
 
     fun recalclulate() {
         val gribFiles = openGribFiles()
@@ -33,7 +33,7 @@ object CellsCreator {
                             val low = getAverageValue(gribFiles.getValue(IMSConstants.LOW_CLOUDS_PARAM), calendar, IMSConstants.LOW_CLOUDS_PARAM_FILE, lat, long)
                             val medium = getAverageValue(gribFiles.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM), calendar, IMSConstants.MEDIUM_CLOUDS_PARAM_FILE, lat, long)
                             val high = getAverageValue(gribFiles.getValue(IMSConstants.HIGH_CLOUDS_PARAM), calendar, IMSConstants.HIGH_CLOUDS_PARAM_FILE, lat, long)
-                            val cell = Cell(date, cellSize, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0, 0.0,"")
+                            val cell = Cell(date, CELL_SIZE, lat, long, low, medium, high, 0.0, 0.0, 0.0, 0.0, 0.0,"")
                             try {
                                 DB.saveLocalCloudsCell(cell)
                             } catch (e: Exception) {

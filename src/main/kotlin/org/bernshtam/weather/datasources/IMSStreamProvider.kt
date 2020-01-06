@@ -68,20 +68,24 @@ object IMSStreamProvider {
             }
         }
 
-        removeOldFiles()
-        println("Old files removed")
-        IMSConnector.reopenGribFiles()
-        println("Grib files reopened")
-        CellsCreator.recalclulate()
-        println("Cells recreated")
         try {
-            FarCloudsCalculator.recalculate()
+            removeOldFiles()
+            println("Old files removed")
+            IMSConnector.reopenGribFiles()
+            println("Grib files reopened")
+            CellsCreator.recalclulate()
+            println("Cells recreated")
+            try {
+                FarCloudsCalculator.recalculate()
+            } catch (e: Exception) {
+                println("Skipped far cloud recalc: $e")
+            }
+            println("Far clouds recalculated")
+            RankCalculator.recalculate()
+            println("Ranks recalculated")
         } catch (e: Exception) {
-            println("Skipped far cloud recalc: $e")
+            e.printStackTrace()
         }
-        println("Far clouds recalculated")
-        RankCalculator.recalculate()
-        println("Ranks recalculated")
     }
 
 

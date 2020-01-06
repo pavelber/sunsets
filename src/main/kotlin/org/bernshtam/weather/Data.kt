@@ -26,6 +26,8 @@ data class DarkSkyDataAtPoint(val cloudCover: Double?, val pressure: Double?, va
 data class MarkAndDescription(val date: String, val mark: Int, val maxMark: Int, val description: String)
 data class IMSClouds(val high: Double, val medium: Double, val low: Double)
 
+const val CELL_SIZE = 0.1
+
 data class Cell(val date: LocalDate,
                 val square_size: Double,
                 val latitude: Double,

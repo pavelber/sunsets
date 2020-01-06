@@ -6,6 +6,7 @@ import org.flywaydb.core.Flyway
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.sql.Connection
+import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.util.*
@@ -45,70 +46,12 @@ object DB {
         return cpds.connection
     }
 
-    fun putToDB(p: PointAtTime, json: String?, source: String) {
-        getConnection().use { connection ->
-            connection.autoCommit = true
-            connection.createStatement().use { statement ->
-
-                val lat = (p.lat * 1000).toInt()
-                val long = (p.long * 1000).toInt()
-                val time = p.getLocalTime()
-                val sql = """
-                        MERGE INTO cache AS t USING (VALUES($lat,$long,$time,'$source')) AS vals(lat,long,time,source)
-                        ON t.latitude=vals.lat AND t.longitude=vals.long and t.time = vals.time and t.source = vals.source
-                        WHEN NOT MATCHED THEN insert  VALUES $lat,$long,$time,'$json',cast(TIMESTAMP ($time) as date), now(), '$source'
-                        WHEN MATCHED THEN update set json = '$json', update_time = now()
-                        """
-                // println(sql)
-                statement.execute(sql)
-
-            }
-        }
-
-    }
-
-    fun get(p: PointAtTime, source: String): String? {
-        getConnection().use { connection ->
-            connection.createStatement().use { statement ->
-
-                val lat = (p.lat * 1000).toInt()
-                val long = (p.long * 1000).toInt()
-                val time = p.getLocalTime()
-                //   println("select json from darksky where latitude = $lat and longitude = $long and time = $time")
-                val resultSet = statement.executeQuery("select json,update_time from cache where latitude = $lat and longitude = $long and time = $time and source = '$source'")
-                resultSet.use {
-                    return if (it.next())
-                        if (shouldUpdate(time, it.getTimestamp(2)))
-                            null
-                        else it.getString(1)
-                    else null
-                }
-            }
-
-        }
-    }
-
     fun shutdown() {
         getConnection().use { connection ->
             connection.createStatement().use { statement ->
                 statement.execute("SHUTDOWN ")
             }
         }
-    }
-
-    private fun shouldUpdate(time: Long, timestamp: Timestamp): Boolean {
-        val nowDate = Date()
-        val requestDate = Date(time * 1000)
-
-        // past not update
-        if (requestDate < nowDate)
-            return false
-
-        val diffInMillies = Math.abs(nowDate.time - timestamp.time)
-        val updatedHoursAgo = TimeUnit.HOURS.convert(diffInMillies, TimeUnit.MILLISECONDS)
-        return if (DateUtils.isSameDay(nowDate, requestDate))
-            updatedHoursAgo > 0 // today update every hour
-        else updatedHoursAgo > 3 // future update each 6 hours
     }
 
     fun updateCell(cell: Cell) {
@@ -137,7 +80,7 @@ object DB {
         }
     }
 
-      fun saveLocalCloudsCell(cell: Cell) {
+    fun saveLocalCloudsCell(cell: Cell) {
         getConnection().use { connection ->
             val insertCellStatement = connection.prepareStatement(
                     """
@@ -182,25 +125,51 @@ object DB {
                             |from cell where date = '$date'""".trimMargin())
                 resultSet.use {
                     return generateSequence {
-                        var i = 1
                         if (resultSet.next())
-                            Cell(resultSet.getDate(i++).toLocalDate(),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getDouble(i++),
-                                    resultSet.getString(i++)
-                            ) else null
+                            cell(resultSet) else null
                     }.toList()
                 }
             }
+        }
+    }
+
+    private fun cell(resultSet: ResultSet): Cell {
+        var i = 1
+        return Cell(
+                resultSet.getDate(i++).toLocalDate(),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getString(i++)
+        )
+    }
+
+    fun findNearestCell(lat: Double, long: Double, date: LocalDate): Cell? {
+        getConnection().use { connection ->
+            val statement = connection.prepareStatement(
+                    """
+                        select date,square_size, latitude,longitude,low, medium, high, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
+                        from cell where DATE = ? and abs(LATITUDE-?)<$CELL_SIZE and abs(LONGITUDE-?)<$CELL_SIZE 
+                         """)
+
+
+            var int = 1
+            statement.setDate(int++, java.sql.Date.valueOf(date))
+            statement.setDouble(int++, lat)
+            statement.setDouble(int++, long)
+
+            val resultSet = statement.executeQuery()
+            return if (resultSet.next())
+                cell(resultSet)
+            else null
         }
     }
 }

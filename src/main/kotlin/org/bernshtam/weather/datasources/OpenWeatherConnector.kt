@@ -29,9 +29,8 @@ object OpenWeatherConnector {
     }
 
     fun getJsonString(p: PointAtTime): String {
-
+        rateLimiter.acquire()
         val url = URL("https://api.openweathermap.org/data/2.5/forecast?lat=${p.lat}&lon=${p.long}&APPID=$secretKey")
-        println(rateLimiter.acquire()>0.0)
         with(url.openConnection() as HttpURLConnection) {
           //  println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")
             require(responseCode == 200) { responseMessage }

@@ -13,7 +13,7 @@ object MainFromCoordinates {
         val lat = 32.5
         val long = 34.5
         val place = Place.PLACES.getValue("Tel Aviv")
-        val service = SunSetService()
+        val service = DBSunSetService()
         println(service.getMarkAndDescription(place.lat,place.long, LocalDate.now()))
         //    println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(1)))
         //    println(getMarkAndDescription(lat, long, LocalDate.now().plusDays(2)))

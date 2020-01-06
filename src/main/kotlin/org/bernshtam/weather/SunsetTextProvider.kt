@@ -5,7 +5,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.response.respond
 
 object SunsetTextProvider {
-    private val service = SunSetService()
+    private val service = DBSunSetService()
 
     suspend fun handle(call: ApplicationCall) {
         val request = call.request

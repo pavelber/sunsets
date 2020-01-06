@@ -46,31 +46,31 @@ object CellsSunSetService {
         val medium = (c.medium + cS.medium + cN.medium + cW.medium * 3) / 6.0
         val high = (c.high + cS.high + cN.high + cW.high * 3) / 6.0
 
-        val coefFrom5MinsLighting = if (c.sun_blocking_near > 0.6) 0 else if (c.sun_blocking_near > 0.3) 1 else 2
-        val coefFrom10MinsLighting = if (c.sun_blocking_far > 0.6) 0 else if (c.sun_blocking_far > 0.3) 1 else 2
+        val coefFrom5MinsLighting = if (c.sun_blocking_near > 60.0) 0 else if (c.sun_blocking_near > 30.0) 1 else 2
+        val coefFrom10MinsLighting = if (c.sun_blocking_far > 60.0) 0 else if (c.sun_blocking_far > 30.0) 1 else 2
         val coefFromLighting = coefFrom5MinsLighting + coefFrom10MinsLighting
 
-        val highClouds = low < 0.5 && medium < 0.5 && high > 0.2
-        val notLowClouds = low < 0.5 && (medium > 0.0 || high > 0.0)
+        val highClouds = low < 50.0 && medium < 50.0 && high > 20.0
+        val notLowClouds = low < 50.0 && (medium > 0.0 || high > 0.0)
         val lightDescription = when {
             coefFromLighting > 2 && highClouds -> "An excellent chance for good light on clouds after sunset."
             coefFromLighting > 0 && notLowClouds -> "A chance for good light on clouds after sunset."
             else -> ""
 
         }
-        val cloudsDescriptions = "Low clouds: ${(100 * low).toInt()}. Medium clouds: ${(100 * medium).toInt()}. High clouds: ${(100 * high).toInt()}."
+        val cloudsDescriptions = "Low clouds: ${low.toInt()}. Medium clouds: ${medium.toInt()}. High clouds: ${high.toInt()}."
         val description = "$cloudsDescriptions $lightDescription"
 
         val max = 16
-        if (low > 0.2) return MarkAndDescription("", 0, max, description)
+        if (low > 20.0) return MarkAndDescription("", 0, max, description)
         else {
-            if (medium > 0.2) return MarkAndDescription("", 1 * coefFromLighting, max, description)
+            if (medium > 20.0) return MarkAndDescription("", 1 * coefFromLighting, max, description)
             else {
 
-                if (high > 0.5) return MarkAndDescription("", 4 * coefFromLighting, max, description)
+                if (high > 50.0) return MarkAndDescription("", 4 * coefFromLighting, max, description)
                 else {
-                    if (high > 0.2) return MarkAndDescription("", 3 * coefFromLighting, max, description)
-                    else if (high == 0.0) return MarkAndDescription("", (if (medium > 0.2) 1 else 0) * coefFromLighting, max, description)
+                    if (high > 20.0) return MarkAndDescription("", 3 * coefFromLighting, max, description)
+                    else if (high == 0.0) return MarkAndDescription("", (if (medium > 20.0) 1 else 0) * coefFromLighting, max, description)
                     else {
                         return MarkAndDescription("", 2 * coefFromLighting, max, description)
                     }
@@ -85,8 +85,8 @@ object CellsSunSetService {
         var description = ""
 
         when {
-            c.sunset_near < 0.2 -> description += " A little or no clouds on the west."
-            c.sunset_near in 0.2..0.7 -> {
+            c.sunset_near < 20.0 -> description += " A little or no clouds on the west."
+            c.sunset_near in 20.0..70.0 -> {
                 points += 4;description += " Clouds on the west."
             }
             else -> {
@@ -96,10 +96,10 @@ object CellsSunSetService {
 
 
         when {
-            c.sunset_far == 0.0 -> {
+            c.sunset_far < 20.0 -> {
                 points += 6; description += " Clear sky on the sunset point."
             }
-            c.sunset_far in 0.2..0.7 -> {
+            c.sunset_far in 20.0..70.0 -> {
                 points += 2; description += " Clouds on the sunset point."
             }
             else -> {
