@@ -8,7 +8,7 @@
     <style>
       .map {
         width: 100%;
-        height: 95%;
+        height: 80%;
         position:fixed
       }
       /* Navbar container */
@@ -17,7 +17,13 @@
           background-color: #333;
           font-family: Arial;
       }
-
+      .footer {
+          clear: both;
+          position: absolute;
+          bottom: 0;
+          font-family: Arial;
+          font-size: 12px;
+      }
       /* Links inside the navbar */
       .navbar a {
           float: left;
@@ -107,6 +113,11 @@
     </div>
 </div>
 <div id="map" class="map"></div>
+<div class="footer">
+    &copy Pavel Bernshtam, 2019-2020 using data from
+    <A HREF="http://www.ims.gov.il/IMSEng/All_tahazit/Model%20based%20weather%20charts/">Israel Meteorological Service</A> and
+    <A HREF="https://openweathermap.org/api">OpenWeather</A>
+</div>
 <script src="index.js"></script>
 </body>
 </html>

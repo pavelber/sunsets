@@ -54,7 +54,7 @@ object FarCloudsCalculator {
             abs(it.long("dt")!! - t) < 30 * 60
         }
 
-        return (forecast?.obj("clouds")?.int("all") ?: 0) / 100.0
+        return (forecast?.obj("clouds")?.int("all") ?: 0).toDouble()
     }
 
 }
