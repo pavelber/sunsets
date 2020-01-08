@@ -3,6 +3,7 @@ package org.bernshtam.weather.utils
 import com.grum.geocalc.Coordinate
 import com.grum.geocalc.EarthCalc
 import com.grum.geocalc.Point
+import com.sun.org.apache.xalan.internal.lib.ExsltMath
 import net.time4j.Moment
 import net.time4j.PlainDate
 import net.time4j.SI
@@ -12,12 +13,14 @@ import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
 import org.bernshtam.weather.PointAtTime
+import org.bernshtam.weather.RankCalculator
 import java.time.LocalDate
 import java.util.*
 
 object Utils {
 
-     const val EARTH_RADIUS = 6731.0 // km
+    const val EARTH_RADIUS = 6731.0 // km
+    private const val PRECISION = 0.01
 
     /**
      * Hours per day.
@@ -104,5 +107,5 @@ object Utils {
         return pointAtTime
     }
 
-
+    fun Double.eq(a: Double) = ExsltMath.abs(this - a) < PRECISION
 }

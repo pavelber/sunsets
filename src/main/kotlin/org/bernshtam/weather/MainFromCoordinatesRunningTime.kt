@@ -1,5 +1,6 @@
 package org.bernshtam.weather
 
+import org.bernshtam.weather.dal.DB
 import org.bernshtam.weather.datasources.IMSConnector
 import java.time.LocalDateTime
 import java.time.ZoneId

@@ -1,5 +1,7 @@
 package org.bernshtam.weather
 
+import org.bernshtam.weather.dal.CellDAL.findNearestCell
+import org.bernshtam.weather.dal.DB
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -20,7 +22,7 @@ class DBSunSetService {
     }
 
     fun getMarkAndDescription(lat: Double, long: Double, date: LocalDate): MarkAndDescription {
-        val cell = DB.findNearestCell(lat, long, date)
+        val cell = findNearestCell(lat, long, date)
         return MarkAndDescription(dateTimeFormatter.format(date),
                 (cell?.rank ?: 0.0).toInt(), 100, cell?.description ?: "")
     }

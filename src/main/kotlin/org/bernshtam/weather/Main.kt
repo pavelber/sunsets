@@ -1,15 +1,12 @@
 package org.bernshtam.weather
 
-import com.beust.klaxon.JsonObject
-import io.ktor.application.ApplicationCall
+import org.bernshtam.weather.dal.DB
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.features.ContentNegotiation
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.jackson.jackson
-import io.ktor.response.respond
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.embeddedServer
@@ -22,6 +19,7 @@ object Main {
     fun main(args: Array<String>) {
         val prefix = TokenManager.get("api.prefix")
         DB.migrate()
+        CoordinatesForRankSaver.save()
         DataRetrievalSchedulers.runSchedulers()
 
         val server = embeddedServer(Netty, port = 8080) {

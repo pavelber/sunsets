@@ -1,6 +1,7 @@
 package org.bernshtam.weather
 
 
+import org.bernshtam.weather.dal.DB
 import java.time.LocalDate
 
 

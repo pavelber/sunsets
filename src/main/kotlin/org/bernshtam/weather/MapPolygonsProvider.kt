@@ -4,22 +4,29 @@ import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
 import io.ktor.application.ApplicationCall
 import io.ktor.response.respond
+import org.bernshtam.weather.dal.CellDAL.getCells
 import java.time.LocalDate
 
 object MapPolygonsProvider {
 
+
     suspend fun handle(call: ApplicationCall) {
         val request = call.request
-        val day = request.queryParameters["day"]?.toLong()?:0
+        val day = request.queryParameters["day"]?.toLong() ?: 0
         val map = request.queryParameters["map"]
-        val value = when(map){
-            "low" -> {c:Cell-> "0,0,0,${c.low}"}
-            "medium" -> {c:Cell->"0,0,255,${c.medium}"}
-            "high" -> {c:Cell-> "255,165,0,${c.high}"}
-            "sunset" -> {c:Cell-> "255,0,0,${c.rank/100.0}"}
-            else -> {c:Cell-> "0,0,0,${c.low}"}
+        val value = when (map) {
+            "low" -> { c: Cell -> "0,0,0,${c.low}" }
+            "medium" -> { c: Cell -> "0,0,255,${c.medium}" }
+            "high" -> { c: Cell -> "255,165,0,${c.high}" }
+            "sunset" -> { c: Cell -> "255,0,0,${(c.rank ?: 0.0) / 100.0}" }
+            else -> { c: Cell -> "0,0,0,${c.low}" }
         }
-        val cells = DB.getCells(LocalDate.now().plusDays(day))
+        val filter = when (map) {
+            "sunset" -> { c: Cell -> c.rank != null }
+            else -> { c: Cell -> true }
+        }
+        val cells = getCells(LocalDate.now().plusDays(day))
+
         call.respond("""
            {
               "type": "FeatureCollection",
@@ -29,11 +36,11 @@ object MapPolygonsProvider {
                   "name": "EPSG:4326"
                 }
               }, 
-                            "features":${convertToJson(cells, value)}}""".trimIndent())
+                            "features":${convertToJson(cells, filter, value)}}""".trimIndent())
     }
 
-    private fun convertToJson(cells: List<Cell>, value: (Cell) -> String): String {
-        return cells.map { c ->
+    private fun convertToJson(cells: List<Cell>, filter: (Cell) -> Boolean, value: (Cell) -> String): String {
+        return cells.filter(filter).map { c ->
             JsonObject().also {
                 it["type"] = "Feature"
                 it["properties"] = JsonObject().also { p ->

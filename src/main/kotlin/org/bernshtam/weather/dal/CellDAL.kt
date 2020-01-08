@@ -1,61 +1,16 @@
-package org.bernshtam.weather
+package org.bernshtam.weather.dal
 
-import com.mchange.v2.c3p0.ComboPooledDataSource
-import org.apache.commons.lang.time.DateUtils
-import org.flywaydb.core.Flyway
+import org.bernshtam.weather.CELL_SIZE
+import org.bernshtam.weather.Cell
 import java.math.BigDecimal
 import java.math.RoundingMode
-import java.sql.Connection
 import java.sql.ResultSet
-import java.sql.Timestamp
 import java.time.LocalDate
-import java.util.*
-import java.util.concurrent.TimeUnit
 
-
-object DB {
-    private const val url = "jdbc:hsqldb:file:db/weather.db;shutdown=true"
-    private const val user = "SA"
-    private const val password = ""
-
-    private val cpds = ComboPooledDataSource()
-
-    init {
-        cpds.driverClass = "org.hsqldb.jdbcDriver" //loads the jdbc driver
-        cpds.jdbcUrl = url
-        cpds.user = user
-        cpds.password = password
-
-        cpds.minPoolSize = 5
-        cpds.initialPoolSize = 5
-        cpds.acquireIncrement = 5
-        cpds.maxPoolSize = 20
-    }
-
-    fun migrate() {
-        val flyway = Flyway.configure().dataSource(url, user, password).load()
-        flyway.migrate()
-
-    }
-
-    fun close() {
-        cpds.close()
-    }
-
-    private fun getConnection(): Connection {
-        return cpds.connection
-    }
-
-    fun shutdown() {
-        getConnection().use { connection ->
-            connection.createStatement().use { statement ->
-                statement.execute("SHUTDOWN ")
-            }
-        }
-    }
+object CellDAL {
 
     fun updateCell(cell: Cell) {
-        getConnection().use { connection ->
+        DB.getConnection().use { connection ->
             val insertCellStatement = connection.prepareStatement(
                     """
                         update cell set low = ?, medium = ?, high = ?, sunset_near = ?, sunset_far= ?, sun_blocking_near = ?, sun_blocking_far = ?, rank = ?, description = ?
@@ -67,21 +22,21 @@ object DB {
             insertCellStatement.setDouble(int++, cell.low)
             insertCellStatement.setDouble(int++, cell.medium)
             insertCellStatement.setDouble(int++, cell.high)
-            insertCellStatement.setDouble(int++, cell.sunset_near)
-            insertCellStatement.setDouble(int++, cell.sunset_far)
-            insertCellStatement.setDouble(int++, cell.sun_blocking_near)
-            insertCellStatement.setDouble(int++, cell.sun_blocking_far)
-            insertCellStatement.setDouble(int++, cell.rank)
+            insertCellStatement.setBigDecimal(int++, round(cell.sunset_near))
+            insertCellStatement.setBigDecimal(int++, round(cell.sunset_far))
+            insertCellStatement.setBigDecimal(int++, round(cell.sun_blocking_near))
+            insertCellStatement.setBigDecimal(int++, round(cell.sun_blocking_far))
+            insertCellStatement.setBigDecimal(int++, round(cell.rank))
             insertCellStatement.setString(int++, cell.description)
             insertCellStatement.setDate(int++, java.sql.Date.valueOf(cell.date))
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.latitude).setScale(2, RoundingMode.HALF_EVEN))
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.longitude).setScale(2, RoundingMode.HALF_EVEN))
+            insertCellStatement.setBigDecimal(int++, round(cell.latitude))
+            insertCellStatement.setBigDecimal(int++, round(cell.longitude))
             insertCellStatement.executeUpdate()
         }
     }
 
     fun saveLocalCloudsCell(cell: Cell) {
-        getConnection().use { connection ->
+        DB.getConnection().use { connection ->
             val insertCellStatement = connection.prepareStatement(
                     """
                         MERGE INTO cell AS t USING (VALUES(?,?,?)) AS vals(date,latitude,longitude)
@@ -94,20 +49,20 @@ object DB {
 
             var int = 1
             insertCellStatement.setDate(int++, java.sql.Date.valueOf(cell.date))
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.latitude).setScale(2, RoundingMode.HALF_EVEN))
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.longitude).setScale(2, RoundingMode.HALF_EVEN))
+            insertCellStatement.setBigDecimal(int++, round(cell.latitude))
+            insertCellStatement.setBigDecimal(int++, round(cell.longitude))
             insertCellStatement.setDate(int++, java.sql.Date.valueOf(cell.date))
             insertCellStatement.setDouble(int++, cell.square_size)
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.latitude).setScale(2, RoundingMode.HALF_EVEN))
-            insertCellStatement.setBigDecimal(int++, BigDecimal(cell.longitude).setScale(2, RoundingMode.HALF_EVEN))
+            insertCellStatement.setBigDecimal(int++, round(cell.latitude))
+            insertCellStatement.setBigDecimal(int++, round(cell.longitude))
             insertCellStatement.setDouble(int++, cell.low)
             insertCellStatement.setDouble(int++, cell.medium)
             insertCellStatement.setDouble(int++, cell.high)
-            insertCellStatement.setDouble(int++, cell.sunset_near)
-            insertCellStatement.setDouble(int++, cell.sunset_far)
-            insertCellStatement.setDouble(int++, cell.sun_blocking_near)
-            insertCellStatement.setDouble(int++, cell.sun_blocking_far)
-            insertCellStatement.setDouble(int++, cell.rank)
+            insertCellStatement.setBigDecimal(int++, round(cell.sunset_near))
+            insertCellStatement.setBigDecimal(int++, round(cell.sunset_far))
+            insertCellStatement.setBigDecimal(int++, round(cell.sun_blocking_near))
+            insertCellStatement.setBigDecimal(int++, round(cell.sun_blocking_far))
+            insertCellStatement.setBigDecimal(int++, round(cell.rank))
             insertCellStatement.setString(int++, cell.description)
             insertCellStatement.setDouble(int++, cell.low)
             insertCellStatement.setDouble(int++, cell.medium)
@@ -116,8 +71,11 @@ object DB {
         }
     }
 
+    private fun round(v: Double?) = if (v != null) BigDecimal(v).setScale(2, RoundingMode.HALF_EVEN) else null
+    private fun d(v: BigDecimal?) = v?.toDouble()
+
     fun getCells(date: LocalDate): List<Cell> {
-        getConnection().use { connection ->
+        DB.getConnection().use { connection ->
             connection.createStatement().use { statement ->
 
                 val resultSet = statement.executeQuery(
@@ -133,27 +91,8 @@ object DB {
         }
     }
 
-    private fun cell(resultSet: ResultSet): Cell {
-        var i = 1
-        return Cell(
-                resultSet.getDate(i++).toLocalDate(),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getDouble(i++),
-                resultSet.getString(i++)
-        )
-    }
-
     fun findNearestCell(lat: Double, long: Double, date: LocalDate): Cell? {
-        getConnection().use { connection ->
+        DB.getConnection().use { connection ->
             val statement = connection.prepareStatement(
                     """
                         select date,square_size, latitude,longitude,low, medium, high, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
@@ -172,4 +111,25 @@ object DB {
             else null
         }
     }
+
+    private fun cell(resultSet: ResultSet): Cell {
+        var i = 1
+        return Cell(
+                resultSet.getDate(i++).toLocalDate(),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                resultSet.getDouble(i++),
+                d(resultSet.getBigDecimal(i++)),
+                d(resultSet.getBigDecimal(i++)),
+                d(resultSet.getBigDecimal(i++)),
+                d(resultSet.getBigDecimal(i++)),
+                d(resultSet.getBigDecimal(i++)),
+                resultSet.getString(i++)
+        )
+    }
+
+
 }
