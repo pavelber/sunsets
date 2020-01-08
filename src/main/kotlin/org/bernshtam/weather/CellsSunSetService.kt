@@ -63,7 +63,7 @@ object CellsSunSetService {
         val cloudsDescriptions = "Low clouds: ${low.toInt()}. Medium clouds: ${medium.toInt()}. High clouds: ${high.toInt()}."
         val description = "$cloudsDescriptions $lightDescription"
 
-        val max = 16
+        val max = 24
         if (low > 20.0) return MarkAndDescription("", 0, max, description)
         else {
             if (medium > 20.0) return MarkAndDescription("", 1 * coefFromLighting, max, description)
