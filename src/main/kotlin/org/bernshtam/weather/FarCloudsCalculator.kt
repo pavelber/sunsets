@@ -50,8 +50,12 @@ object FarCloudsCalculator {
     private fun getClouds(json: JsonObject, time: ZonedDateTime): Double {
         val t = time.toInstant().epochSecond
 
-        val forecast = json.array<JsonObject>("list")?.first {
+        val forecast = json.array<JsonObject>("list")?.firstOrNull{
             abs(it.long("dt")!! - t) < 30 * 60
+        }
+
+        if (forecast == null) {
+            println("****** NOT FOUND FORECAST FOR THE TIME $time ($t) in json \n${json.toJsonString(prettyPrint = true)}")
         }
 
         return (forecast?.obj("clouds")?.int("all") ?: 0).toDouble()

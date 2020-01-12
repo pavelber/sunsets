@@ -15,9 +15,9 @@ object MapPolygonsProvider {
         val day = request.queryParameters["day"]?.toLong() ?: 0
         val map = request.queryParameters["map"]
         val value = when (map) {
-            "low" -> { c: Cell -> "0,0,0,${c.low}" }
-            "medium" -> { c: Cell -> "0,0,255,${c.medium}" }
-            "high" -> { c: Cell -> "255,165,0,${c.high}" }
+            "low" -> { c: Cell -> "0,0,0,${c.low / 100.0}" }
+            "medium" -> { c: Cell -> "0,0,255,${c.medium / 100.0}" }
+            "high" -> { c: Cell -> "255,165,0,${c.high / 100.0}" }
             "sunset" -> { c: Cell -> "255,0,0,${(c.rank ?: 0.0) / 100.0}" }
             else -> { c: Cell -> "0,0,0,${c.low}" }
         }
