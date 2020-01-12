@@ -40,7 +40,7 @@ object IMSConnector {
     }
 
     private fun getFile(s: String) =
-            downloadDir.listFiles { f -> f.name.endsWith("$s.grb") }.minBy { it.lastModified() }!!
+            downloadDir.listFiles { f -> f.name.endsWith("$s.grb") }.maxBy { it.name }!!
 
     private fun getValue(pointAtTime: PointAtTime, param: Pair<String, String>): Double {
         val paramName = param.first
