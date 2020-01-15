@@ -12,10 +12,11 @@ import kotlin.math.abs
 
 object FarCloudsCalculator {
     fun recalculate() {
-        val days = (0L..2L).map { LocalDate.now().plusDays(it) }
+        val startDay = Utils.getTodayOrTommorrowDependsOnTimeNow()
+        val days = (0L..2L).map { startDay.plusDays(it) }
         val cellPerDay = days.map { getCells(it) }
         val cellsToday = cellPerDay[0]
-        var i = 0
+
         try {
             cellsToday.forEach { cell ->
                 if (IsraelCoordinatesStore.isInsideIsrael(cell)) {

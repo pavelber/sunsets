@@ -7,6 +7,9 @@ import VectorSource from "ol/source/Vector";
 import {Fill, Stroke, Style} from "ol/style";
 import TileLayer from "ol/layer/Tile";
 import {OSM} from "ol/source";
+import * as olProj from 'ol/proj';
+import Overlay from 'ol/Overlay';
+import $ from "jquery";
 
 let dayGlobal = 0;
 let mapTypeGlobal = 'low';
@@ -16,13 +19,10 @@ var vectorLoader = function (extent, resolution, projection) {
     var url = '/sunset/source?day=' + dayGlobal + '&map=' + mapTypeGlobal;
     var xmlhttp = new XMLHttpRequest();
 
-    xmlhttp.onreadystatechange = function() {
-//        console.log(xmlhttp.readyState);
+    xmlhttp.onreadystatechange = function () {
         if (xmlhttp.readyState === XMLHttpRequest.DONE) {   // XMLHttpRequest.DONE == 4
-  //          console.log(xmlhttp.status);
             if (xmlhttp.status === 200) {
-                let features = geoJSON.readFeatures( xmlhttp.responseText, {featureProjection: projection});
-    //            console.log(features);
+                let features = geoJSON.readFeatures(xmlhttp.responseText, {featureProjection: projection});
                 source.addFeatures(features);
             }
         }
@@ -33,7 +33,6 @@ var vectorLoader = function (extent, resolution, projection) {
 };
 
 var source = new VectorSource({
-    //url: 'http://localhost:8080/source?day='+day+'&map='+mapTypeGlobal,
     loader: vectorLoader,
     format: geoJSON
 });
@@ -56,6 +55,34 @@ var layer = new VectorLayer({
     style: styleFunction
 });
 
+
+var container = document.getElementById('popup');
+var content = document.getElementById('popup-content');
+var closer = document.getElementById('popup-closer');
+
+
+/**
+ * Create an overlay to anchor the popup to the map.
+ */
+var overlay = new Overlay({
+    element: container,
+    autoPan: true,
+    autoPanAnimation: {
+        duration: 250
+    }
+});
+
+
+/**
+ * Add a click handler to hide the popup.
+ * @return {boolean} Don't follow the href.
+ */
+closer.onclick = function () {
+    overlay.setPosition(undefined);
+    closer.blur();
+    return false;
+};
+
 var map = new Map({
     layers: [
         new TileLayer({
@@ -64,6 +91,7 @@ var map = new Map({
         layer
     ],
     target: "map",
+    overlays: [overlay],
     view: new View({
         center: [4000000, 3800000],
         zoom: 8
@@ -72,15 +100,30 @@ var map = new Map({
 
 module.exports.changeMap = function changeMap(mapType) {
     mapTypeGlobal = mapType;
-    document.getElementById('mapbutton').textContent = 'Map '+mapType;
+    document.getElementById('mapbutton').textContent = 'Map ' + mapType;
     layer.getSource().clear();
     layer.getSource().refresh();
 };
 
 module.exports.changeDay = function changeDay(day) {
     dayGlobal = day;
-    document.getElementById('daybutton').textContent = 'Day '+day;
+    document.getElementById('daybutton').textContent = 'Day ' + day;
     layer.getSource().clear();
     layer.getSource().refresh();
 };
+map.on('click', function (evt) {
+    var coordinates = evt.coordinate;
+    var longLat = olProj.toLonLat(evt.coordinate)
+    var feature = map.forEachFeatureAtPixel(evt.pixel,
+        function (feature, layer) {
+            return feature;
+        });
+    if (typeof feature !== 'undefined' && mapTypeGlobal === "sunset") {
+        $.get("/sunset/sunset?lat=" + longLat[1] + "&long=" + longLat[0], function (data) {
+            var daydata = data[dayGlobal];
+            content.innerHTML = "<B>" + daydata["mark"] + ":" + daydata["maxMark"] + "</B><P>" + daydata["description"] + "</P>";
 
+            overlay.setPosition(coordinates);
+        });
+    }
+});

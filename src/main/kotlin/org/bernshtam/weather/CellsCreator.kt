@@ -1,11 +1,14 @@
 package org.bernshtam.weather
 
 import mt.edu.um.cf2.jgribx.GribFile
+import net.time4j.ZonalDateTime
 import org.bernshtam.weather.dal.CellDAL.saveLocalCloudsCell
 import org.bernshtam.weather.datasources.IMSConstants
 import org.bernshtam.weather.utils.Utils
+import org.bernshtam.weather.utils.Utils.getTodayOrTommorrowDependsOnTimeNow
 import java.io.FileInputStream
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -16,8 +19,9 @@ object CellsCreator {
 
     fun recalclulate() {
         val gribFiles = openGribFiles()
-        val today = LocalDate.now()
-        (0L..2L).map { today.plus(it, ChronoUnit.DAYS) }
+
+        val startDay = getTodayOrTommorrowDependsOnTimeNow()
+        (0L..2L).map { startDay.plus(it, ChronoUnit.DAYS) }
                 .forEach { date ->
                     var lat = LAT_START + CELL_SIZE
                     while (lat < LAT_END) {

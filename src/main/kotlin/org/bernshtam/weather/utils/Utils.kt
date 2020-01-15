@@ -7,14 +7,17 @@ import com.sun.org.apache.xalan.internal.lib.ExsltMath
 import net.time4j.Moment
 import net.time4j.PlainDate
 import net.time4j.SI
+import net.time4j.ZonalDateTime
 import net.time4j.calendar.astro.GeoLocation
 import net.time4j.calendar.astro.SolarTime
 import net.time4j.calendar.astro.SunPosition
 import net.time4j.engine.CalendarDate
 import net.time4j.engine.ChronoFunction
+import org.bernshtam.weather.LAT_START
+import org.bernshtam.weather.LONG_START
 import org.bernshtam.weather.PointAtTime
-import org.bernshtam.weather.RankCalculator
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.*
 
 object Utils {
@@ -62,6 +65,13 @@ object Utils {
                 else -> cStr.toString().toDouble()
             }
 
+    fun getTodayOrTommorrowDependsOnTimeNow():LocalDate {
+        val sunsetMomentToday = Utils.getSunsetMoment(LAT_START, LONG_START,  LocalDate.now())
+        val sunsetMomentZonalDateTime = sunsetMomentToday.toLocalTimestamp().inLocalView()
+        val now = ZonalDateTime.from(ZonedDateTime.now())
+        val day = if (sunsetMomentZonalDateTime.compareByLocalTimestamp(now)>1) LocalDate.now() else LocalDate.now().plusDays(1)
+        return day
+    }
 
     fun getSunsetMoment(lat: Double, long: Double, date: LocalDate): Moment {
         val place = SolarTime.ofLocation(lat, long)

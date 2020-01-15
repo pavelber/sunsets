@@ -3,18 +3,16 @@ package org.bernshtam.weather
 import org.bernshtam.weather.IsraelCoordinatesStore.isInsideIsrael
 import org.bernshtam.weather.dal.CellDAL.getCells
 import org.bernshtam.weather.dal.CellDAL.updateCell
-import org.bernshtam.weather.dal.CoordinatesDAL
 import org.bernshtam.weather.utils.Utils.eq
-import java.time.LocalDate
+import org.bernshtam.weather.utils.Utils.getTodayOrTommorrowDependsOnTimeNow
 import java.time.temporal.ChronoUnit
 
 object RankCalculator {
     private const val STEP = CELL_SIZE
-    private val coordinates = CoordinatesDAL.getAll()
 
     fun recalculate() {
-        val today = LocalDate.now()
-        (0L..2L).map { today.plus(it, ChronoUnit.DAYS) }
+        val startDay = getTodayOrTommorrowDependsOnTimeNow()
+        (0L..2L).map { startDay.plus(it, ChronoUnit.DAYS) }
                 .forEach { date ->
                     val cells = getCells(date)
                     cells.forEach { c ->
@@ -32,7 +30,6 @@ object RankCalculator {
                     }
                 }
     }
-
 
 
     private fun find(cells: List<Cell>, c: Cell, dLat: Double, dLong: Double) =
