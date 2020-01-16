@@ -42,7 +42,7 @@ object CellDAL {
                         MERGE INTO cell AS t USING (VALUES(?,?,?)) AS vals(date,latitude,longitude)
                         ON t.latitude=vals.latitude AND t.longitude=vals.longitude and t.date = vals.date
                         WHEN NOT MATCHED THEN  
-                            INSERT values ?, ?, ? , ?, ?, ?, ?, ?, ?,?,?,?,?
+                            INSERT values ?, ?, ? , ?, ?, ?, ?, ?, ?, ?,?,?,?,?
                         WHEN MATCHED THEN update set low = ?, medium = ?, high = ?
                          """)
 
@@ -58,6 +58,7 @@ object CellDAL {
             insertCellStatement.setDouble(int++, cell.low)
             insertCellStatement.setDouble(int++, cell.medium)
             insertCellStatement.setDouble(int++, cell.high)
+            insertCellStatement.setDouble(int++, cell.rain)
             insertCellStatement.setBigDecimal(int++, round(cell.sunset_near))
             insertCellStatement.setBigDecimal(int++, round(cell.sunset_far))
             insertCellStatement.setBigDecimal(int++, round(cell.sun_blocking_near))
@@ -79,7 +80,7 @@ object CellDAL {
             connection.createStatement().use { statement ->
 
                 val resultSet = statement.executeQuery(
-                        """select date,square_size, latitude,longitude,low, medium, high, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
+                        """select date,square_size, latitude,longitude,low, medium, high, rain, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
                             |from cell where date = '$date'""".trimMargin())
                 resultSet.use {
                     return generateSequence {
@@ -95,7 +96,7 @@ object CellDAL {
         DB.getConnection().use { connection ->
             val statement = connection.prepareStatement(
                     """
-                        select date,square_size, latitude,longitude,low, medium, high, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
+                        select date,square_size, latitude,longitude,low, medium, high, rain, rank, sunset_near, sunset_far, sun_blocking_near,sun_blocking_far, description  
                         from cell where DATE = ? and abs(LATITUDE-?)<$CELL_SIZE and abs(LONGITUDE-?)<$CELL_SIZE 
                          """)
 
@@ -116,6 +117,7 @@ object CellDAL {
         var i = 1
         return Cell(
                 resultSet.getDate(i++).toLocalDate(),
+                resultSet.getDouble(i++),
                 resultSet.getDouble(i++),
                 resultSet.getDouble(i++),
                 resultSet.getDouble(i++),

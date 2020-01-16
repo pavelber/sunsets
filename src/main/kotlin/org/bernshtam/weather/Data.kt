@@ -24,7 +24,7 @@ data class PointAtTime private constructor(val lat: Double, val long: Double, va
 }
 
 data class MarkAndDescription(val date: String, val mark: Int, val maxMark: Int, val description: String)
-data class IMSClouds(val high: Double, val medium: Double, val low: Double)
+data class IMSParams(val high: Double, val medium: Double, val low: Double, val rain:Double)
 
 const val CELL_SIZE = 0.1
 
@@ -41,6 +41,7 @@ data class Cell(val date: LocalDate,
                 val low: Double,
                 val medium: Double,
                 val high: Double,
+                val rain: Double,
                 var rank: Double?,
                 var sunset_near: Double?,
                 var sunset_far: Double?,

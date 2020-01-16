@@ -10,6 +10,8 @@ import {OSM} from "ol/source";
 import * as olProj from 'ol/proj';
 import Overlay from 'ol/Overlay';
 import $ from "jquery";
+import {defaults as defaultControls, Control} from 'ol/control';
+
 
 let dayGlobal = 0;
 let mapTypeGlobal = 'low';
@@ -83,7 +85,42 @@ closer.onclick = function () {
     return false;
 };
 
+
+var HourControl = /*@__PURE__*/(function (Control) {
+    function HourControl(opt_options) {
+        var options = opt_options || {};
+
+        var slider = document.createElement('div');
+        slider.id = 'slider';
+
+        var element = document.createElement('div');
+        element.className = 'slider-div';
+        element.appendChild(slider);
+
+        Control.call(this, {
+            element: element,
+            target: options.target
+        });
+
+        slider.addEventListener('click', this.handleHour.bind(this), false);
+    }
+
+    if ( Control ) HourControl.__proto__ = Control;
+    HourControl.prototype = Object.create( Control && Control.prototype );
+    HourControl.prototype.constructor = HourControl;
+
+    HourControl.prototype.handleHour = function handleHour () {
+        this.getMap().getView().setRotation(0);
+    };
+
+    return HourControl;
+}(Control));
+
+
 var map = new Map({
+    controls: defaultControls().extend([
+        new HourControl()
+    ]),
     layers: [
         new TileLayer({
             source: new OSM()
@@ -97,6 +134,7 @@ var map = new Map({
         zoom: 8
     })
 });
+
 
 module.exports.changeMap = function changeMap(mapType) {
     mapTypeGlobal = mapType;
@@ -126,4 +164,10 @@ map.on('click', function (evt) {
             overlay.setPosition(coordinates);
         });
     }
+});
+
+$(document).ready(function() {
+    // $( function() {
+    //     $( "#slider" ).slider();
+    // } );
 });

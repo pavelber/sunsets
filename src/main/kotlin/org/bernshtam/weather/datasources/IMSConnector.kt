@@ -1,8 +1,7 @@
 package org.bernshtam.weather.datasources
 
-import com.beust.klaxon.JsonObject
 import mt.edu.um.cf2.jgribx.GribFile
-import org.bernshtam.weather.IMSClouds
+import org.bernshtam.weather.IMSParams
 import org.bernshtam.weather.PointAtTime
 import org.bernshtam.weather.datasources.IMSConstants.downloadDir
 import org.bernshtam.weather.datasources.IMSConstants.params
@@ -14,28 +13,33 @@ object IMSConnector {
 
     private var gribFiles = openGribFiles()
 
-    fun getCloudsParams(pointAtTime: PointAtTime): IMSClouds {
+    fun getIMSParams(pointAtTime: PointAtTime): IMSParams {
         val paramMap = params.map { p ->
             val value: Double = getValue(pointAtTime, p)
             p.second to value
         }.toMap()
 
-        val json = JsonObject(paramMap)
-        return IMSClouds(
-                json.double(IMSConstants.HIGH_CLOUDS_PARAM_FILE)!! / 100.0,
-                json.double(IMSConstants.MEDIUM_CLOUDS_PARAM_FILE)!! / 100.0,
-                json.double(IMSConstants.LOW_CLOUDS_PARAM_FILE)!! / 100.0
+
+        return IMSParams(
+                paramMap.getValue(IMSConstants.HIGH_CLOUDS_PARAM_FILE) / 100.0,
+                paramMap.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM_FILE) / 100.0,
+                paramMap.getValue(IMSConstants.LOW_CLOUDS_PARAM_FILE) / 100.0,
+                paramMap.getValue(IMSConstants.RAIN_PARAM_FILE) / 100.0
         )
     }
 
 
     fun openGribFiles(): Map<String, GribFile> {
-        return params.map { it.first to GribFile(FileInputStream(getFile(it.first))) }.toMap()
+        try {
+            return params.map { it.first to GribFile(FileInputStream(getFile(it.first))) }.toMap()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw e
+        }
 
     }
 
     fun reopenGribFiles() {
-        val oldFiles = gribFiles;
         gribFiles = openGribFiles()
     }
 

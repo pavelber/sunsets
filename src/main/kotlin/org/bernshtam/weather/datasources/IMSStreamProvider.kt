@@ -100,7 +100,7 @@ object IMSStreamProvider {
     private fun removeOldFiles() {
         try {
             val files: List<File> = downloadDir.listFiles().toList().sortedBy { f -> f.lastModified() }
-            val toRemoveNum = files.size - 9
+            val toRemoveNum = files.size - 3 * IMSConstants.params.size
             val toRemove = files.take(if (toRemoveNum > 0) toRemoveNum else 0)
             toRemove.forEach { it.delete() }
         } catch (e: Exception) {

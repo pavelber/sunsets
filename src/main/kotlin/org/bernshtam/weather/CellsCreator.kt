@@ -1,14 +1,11 @@
 package org.bernshtam.weather
 
 import mt.edu.um.cf2.jgribx.GribFile
-import net.time4j.ZonalDateTime
 import org.bernshtam.weather.dal.CellDAL.saveLocalCloudsCell
 import org.bernshtam.weather.datasources.IMSConstants
 import org.bernshtam.weather.utils.Utils
 import org.bernshtam.weather.utils.Utils.getTodayOrTommorrowDependsOnTimeNow
 import java.io.FileInputStream
-import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -33,7 +30,8 @@ object CellsCreator {
                             val low = getAverageValue(gribFiles.getValue(IMSConstants.LOW_CLOUDS_PARAM), calendar, IMSConstants.LOW_CLOUDS_PARAM_FILE, lat, long)
                             val medium = getAverageValue(gribFiles.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM), calendar, IMSConstants.MEDIUM_CLOUDS_PARAM_FILE, lat, long)
                             val high = getAverageValue(gribFiles.getValue(IMSConstants.HIGH_CLOUDS_PARAM), calendar, IMSConstants.HIGH_CLOUDS_PARAM_FILE, lat, long)
-                            val cell = Cell(date, CELL_SIZE, lat, long, low, medium, high, null, null, null, null, null,null)
+                            val rain = getAverageValue(gribFiles.getValue(IMSConstants.RAIN_PARAM), calendar, IMSConstants.RAIN_PARAM_FILE, lat, long)
+                            val cell = Cell(date, CELL_SIZE, lat, long, low, medium, high, rain, null, null, null, null, null,null)
                             try {
                                 saveLocalCloudsCell(cell)
                             } catch (e: Exception) {
