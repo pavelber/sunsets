@@ -10,6 +10,10 @@ object IMSConstants {
     const val MEDIUM_CLOUDS_PARAM = "CLCM"
     const val LOW_CLOUDS_PARAM_FILE = "LCDC"
     const val LOW_CLOUDS_PARAM = "CLCL"
+    const val TOTAL_CLOUDS_PARAM_FILE = "LCDC"
+    const val TOTAL_CLOUDS_PARAM = "CLCT"
+    const val TEMP_PARAM_FILE = "LCDC"
+    const val TEMP_PARAM = "T_2M"
     const val RAIN_PARAM_FILE = "APCP"
     const val RAIN_PARAM = "TOT_PREC"
     val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
