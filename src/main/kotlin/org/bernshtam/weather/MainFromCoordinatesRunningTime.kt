@@ -15,7 +15,7 @@ object MainFromCoordinatesRunningTime {
         val lat = 31.8
         val long = 35.0
         //val place = Place.PLACES.getValue("Tel Aviv")
-        val dateTime = LocalDateTime.of(2020, 1, 17, 0, 0)
+        val dateTime = LocalDateTime.of(2020, 1, 18, 10, 0)
         (0..6L).forEach {
             val plusHours = dateTime.plusHours(it)
             //println(plusHours.toString() + " " + IMSConnector.getIMSParams(PointAtTime.at(place.lat, place.long, plusHours.atZone(ZoneId.systemDefault()))))
