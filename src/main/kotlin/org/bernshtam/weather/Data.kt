@@ -1,7 +1,7 @@
 package org.bernshtam.weather
 
 import org.bernshtam.weather.utils.Utils
-import java.time.LocalDate
+import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.*
@@ -42,9 +42,9 @@ data class Cell(val id: Long?,
                 val low: Double,
                 val medium: Double,
                 val high: Double,
-                val clouds: Double,
-                val temp: Double,
-                val rain: Double
+                val clouds: BigDecimal?,
+                val temp: BigDecimal?,
+                val rain: BigDecimal?
 ) {
     constructor(time: LocalDateTime,
                 latitude: Double,
@@ -52,16 +52,16 @@ data class Cell(val id: Long?,
                 low: Double,
                 medium: Double,
                 high: Double,
-                clouds: Double,
-                temp: Double,
-                rain: Double) :
+                clouds: BigDecimal?,
+                temp: BigDecimal?,
+                rain: BigDecimal?) :
             this(null, time, latitude, longitude, low, medium, high, clouds, temp, rain)
 
 }
 
 data class Event(val id: Long?, val cellId: Long, val event: String)
 
-data class EventData(val id: Long?, val cellId: Long)
+data class EventData(val id: Long?, val cellId: Long, val param: String, val value: BigDecimal?)
 
 data class Place(val name: String, val lat: Double, val long: Double) {
     companion object {
