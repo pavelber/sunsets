@@ -31,7 +31,7 @@ object IMSConnector {
 
     fun openGribFiles(): Map<String, GribFile> {
         try {
-            return params.map { it.first to GribFile(FileInputStream(getFile(it.first))) }.toMap()
+            return params.map { it.first to GribFile(getFile(it.first).absolutePath) }.toMap()
         } catch (e: Exception) {
             e.printStackTrace()
             throw e

@@ -4,27 +4,26 @@
  * ============================================================================
  * Written by Andrew Spiteri <andrew.spiteri@um.edu.mt>
  * Adapted from JGRIB
- * 
+ *
  * Licensed under MIT (https://github.com/spidru/JGribX/blob/master/LICENSE)
  * ============================================================================
  */
 package mt.edu.um.cf2.jgribx.grib1;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import mt.edu.um.cf2.jgribx.Bytes2Number;
 import mt.edu.um.cf2.jgribx.GribInputStream;
 import mt.edu.um.cf2.jgribx.Logger;
 import mt.edu.um.cf2.jgribx.NotSupportedException;
 
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
+
 /**
  * A class representing the product definition section (PDS) of a GRIB record.
- *
  */
-public class Grib1RecordPDS
-{
+public class Grib1RecordPDS {
     /**
      * Length in bytes of this PDS.
      */
@@ -63,7 +62,6 @@ public class Grib1RecordPDS
 
     /**
      * Model Run/Analysis/Reference time.
-     *
      */
     protected Calendar baseTime;
 
@@ -105,7 +103,7 @@ public class Grib1RecordPDS
     private int subcentreId;
 
     /**
-     * Identification of Generating Process (i.e. the numerical model that 
+     * Identification of Generating Process (i.e. the numerical model that
      * created the data).
      */
     private int processId;
@@ -115,104 +113,100 @@ public class Grib1RecordPDS
      * class. See GribPDSParamTable class for details.
      */
     private GribPDSParamTable parameter_table;
-        
+
     /**
      * Constructs a {@link GribRecordPDS} object from a bit input stream.
      *
      * @param in bit input stream with PDS content
-     *
-     * @throws IOException if stream can not be opened etc.
+     * @throws IOException           if stream can not be opened etc.
      * @throws NotSupportedException
      */
-    public Grib1RecordPDS(GribInputStream in) throws NotSupportedException, IOException
-    {
+    public Grib1RecordPDS(GribInputStream in) throws NotSupportedException, IOException {
         int offset = 0;
         int offset2 = 0;
-        
+
         // All defined times are in UTC
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 
         /* [1-3] Section Length */
         length = in.readUINT(3);
-        
+
         /* [4] Table Version */
         tableVersion = in.readUINT(1);
-        
+
         /* [5] Originating Centre ID */
         centreId = in.readUINT(1);
-        
+
         /* [6] Generating Process */
         processId = in.readUINT(1);
-        
+
         /* [7] Grid Definition */
         gridId = in.readUINT(1);
-        
+
         /* [8] Flag (Presence of PDS and GDS) */
         int flag = in.readUINT(1);
         gdsExists = (flag & 128) == 128;
         bmsExists = (flag & 64) == 64;
-        
+
         /* [9] Parameter Indicator */
         int parameterId = in.readUINT(1);
-        
+
         /* [10] Level Type */
         int levelType = in.readUINT(1);
-        
+
         /* [11-12] Level Data (height, pressure, etc.) */
         int levelData = in.readUINT(2);
-        
+
         /* [13] Year of Century */
         int centuryYear = in.readUINT(1);
-        
+
         /* [14] Month */
         int month = in.readUINT(1);
-        
+
         /* [15] Day */
         int day = in.readUINT(1);
-        
+
         /* [16] Hour */
         int hour = in.readUINT(1);
-        
+
         /* [17] Minute */
         int minute = in.readUINT(1);
-        
+
         /* [18] Time Unit */
         int timeUnit = in.readUINT(1);
-        
+
         /* [19] Time Period P1 (time units) */
         int p1 = in.readUINT(1);
-        
+
         /* [20] Time Period P2 (time units) */
         int p2 = in.readUINT(1);
-        
+
         /* [21] Time Range */
         int timeRangeId = in.readUINT(1);
-        
+
         /* [22-23] Number included in average */
         int number = in.readUINT(2);
-        
+
         /* Number missing from averages */
         int numberMissing = in.readUINT(1);
-        
+
         /* [25] Reference Time Century */
         int century = in.readUINT(1);
-        
+
         /* [26] Originating Sub-centre ID */
         subcentreId = in.readUINT(1);
-        
+
         /* [27-28] Decimal Scale Factor */
         decscale = in.readINT(2, Bytes2Number.INT_SM);
-        
+
         /*********************************************************************/
         /* Data Processing */
 
         /* Parameter */
-        if (tableVersion == 255)
-        {
+        if (tableVersion == 255) {
             parameter_table = null;
             parameter = new Grib1Parameter(255, "missing", "missing parameter", "");
-        } else
-        {
+        } else {
             // Before getting parameter table values, must get the appropriate table for this center, subcenter (not yet implemented) and parameter table.
 //            parameter_table = GribPDSParamTable.getParameterTable(center_id, subcenter_id, table_version);
 //            parameter = parameter_table.getParameter(data[5]);
@@ -220,7 +214,7 @@ public class Grib1RecordPDS
             parameter = Grib1Parameter.getParameter(tableVersion, parameterId, centreId);
         }
         if (parameter == null)
-            throw new NotSupportedException("Unsupported Parameter "+ parameterId + " in Table " + tableVersion);
+            throw new NotSupportedException("Unsupported Parameter " + parameterId + " in Table " + tableVersion);
 
         /* Level */
 //      this.level = GribTables.getLevel(data[6], data[7], data[8]);
@@ -359,11 +353,20 @@ public class Grib1RecordPDS
 
     /**
      * Get the byte length of this section.
+     *
      * @return length in bytes of this section
      */
     public int getLength() {
 
         return length;
+    }
+
+    public Calendar getStartOfRange() {
+        return forecastTime;
+    }
+
+    public Calendar getEndOfRange() {
+        return forecastTime2;
     }
 
     /**
@@ -412,8 +415,7 @@ public class Grib1RecordPDS
      *
      * @return descritpion of parameter
      */
-    public String getParameterDescription()
-    {
+    public String getParameterDescription() {
         if (parameter == null)
             return "";
         else
@@ -435,17 +437,16 @@ public class Grib1RecordPDS
      *
      * @return the level (height or pressure)
      */
-    public Grib1Level getLevel()
-    {
+    public Grib1Level getLevel() {
 
         return level;
     }
 // rdg - added the following getters for level information though they are
 //       just convenience methods.  You could do the same by getting the
 //       GribPDSLevel (with getPDSLevel) then calling its methods directly
+
     /**
      * Get the name for the type of level for this forecast/analysis.
-     *
      *
      * @return name of level (height or pressure)
      */
@@ -499,7 +500,6 @@ public class Grib1RecordPDS
     }
 
     /**
-     *
      * @return the ID of the originating centre
      */
     public int getCentreId() {
@@ -507,7 +507,6 @@ public class Grib1RecordPDS
     }
 
     /**
-     *
      * @return subcenter_id
      */
     public int getSubcenterId() {
@@ -515,7 +514,6 @@ public class Grib1RecordPDS
     }
 
     /**
-     *
      * @return table version
      */
     public int getTableVersion() {
@@ -523,7 +521,6 @@ public class Grib1RecordPDS
     }
 
     /**
-     *
      * @return process_id
      */
     public int getProcessId() {
@@ -545,8 +542,7 @@ public class Grib1RecordPDS
      *
      * @return date and time
      */
-    public Calendar getReferenceTime()
-    {
+    public Calendar getReferenceTime() {
         return this.baseTime;
     }
 
@@ -720,7 +716,6 @@ public class Grib1RecordPDS
      * @param pds - GribRecordPDS object
      * @return - -1 if pds is "less than" this, 0 if equal, 1 if pds is "greater
      * than" this.
-     *
      */
     public int compare(Grib1RecordPDS pds) {
 

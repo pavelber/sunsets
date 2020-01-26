@@ -58,6 +58,7 @@ public class Grib1Record extends GribRecord
      */
     protected Grib1RecordBDS bds;
 
+
     // *** constructors ************************************************************
     public Grib1Record(){}
 
@@ -128,6 +129,10 @@ public class Grib1Record extends GribRecord
       return record;
    }
 
+
+    public Boolean isRange() {
+        return pds.forecastTime.getTimeInMillis() <=  pds.forecastTime2.getTimeInMillis();
+    }
     // *** public methods ******************************************************
     /**
      * Get the bitmap section of this GRIB record.
@@ -148,6 +153,7 @@ public class Grib1Record extends GribRecord
     @Override
     public Calendar getForecastTime()
     {
+        if (isRange()) return  this.pds.forecastTime2;
         return this.pds.forecastTime;
     }
     
