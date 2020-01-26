@@ -112,7 +112,7 @@ public class Grib2Record extends GribRecord
             Logger.println("Record contains multiple PDS's", Logger.WARNING);
         return pdsList.get(0).getForecastTime();
     }
-    
+
     @Override
     public String getLevelCode()
     {

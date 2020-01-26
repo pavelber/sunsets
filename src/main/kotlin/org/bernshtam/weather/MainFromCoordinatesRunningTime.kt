@@ -12,11 +12,13 @@ object MainFromCoordinatesRunningTime {
     @JvmStatic
     fun main(args: Array<String>) {
         DB.migrate()
-        val lat = 31.8
-        val long = 35.0
-        //val place = Place.PLACES.getValue("Tel Aviv")
-        val dateTime = LocalDateTime.of(2020, 1, 18, 10, 0)
-        (0..6L).forEach {
+      //  val lat = 31.8
+       // val long = 35.0
+        val place = Place.PLACES.getValue("Palmachim")
+        val lat = place.lat
+        val long = place.long
+        val dateTime = LocalDateTime.of(2020, 1, 26, 10, 0)
+        (0..24L).forEach {
             val plusHours = dateTime.plusHours(it)
             //println(plusHours.toString() + " " + IMSConnector.getIMSParams(PointAtTime.at(place.lat, place.long, plusHours.atZone(ZoneId.systemDefault()))))
             println(plusHours.toString() + " " + IMSConnector.getIMSParams(PointAtTime.at(lat, long, plusHours.atZone(ZoneId.systemDefault()))))

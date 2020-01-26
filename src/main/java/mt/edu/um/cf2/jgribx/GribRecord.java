@@ -51,7 +51,7 @@ public abstract class GribRecord
         }
         return record;
     }
-    
+
     public GribRecordIS getIS()
     {
         return is;

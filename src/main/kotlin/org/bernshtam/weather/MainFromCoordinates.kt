@@ -11,8 +11,8 @@ object MainFromCoordinates {
     @JvmStatic
     fun main(args: Array<String>) {
         DB.migrate()
-        val lat = 32.5
-        val long = 34.5
+       // val lat = 32.5
+       // val long = 34.5
         val place = Place.PLACES.getValue("Tel Aviv")
         val service = DBSunSetService()
         println(service.getMarkAndDescription(place.lat,place.long, LocalDate.now()))
