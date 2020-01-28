@@ -5,7 +5,6 @@ import org.bernshtam.weather.IMSParams
 import org.bernshtam.weather.PointAtTime
 import org.bernshtam.weather.datasources.IMSConstants.downloadDir
 import org.bernshtam.weather.datasources.IMSConstants.params
-import java.io.FileInputStream
 import java.util.*
 
 object IMSConnector {
@@ -21,9 +20,9 @@ object IMSConnector {
 
 
         return IMSParams(
-                paramMap.getValue(IMSConstants.HIGH_CLOUDS_PARAM_FILE) / 100.0,
-                paramMap.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM_FILE) / 100.0,
-                paramMap.getValue(IMSConstants.LOW_CLOUDS_PARAM_FILE) / 100.0,
+                paramMap.getValue(IMSConstants.HIGH_CLOUDS_PARAM) / 100.0,
+                paramMap.getValue(IMSConstants.MEDIUM_CLOUDS_PARAM) / 100.0,
+                paramMap.getValue(IMSConstants.LOW_CLOUDS_PARAM) / 100.0,
                 paramMap.getValue(IMSConstants.RAIN_PARAM_FILE) / 100.0
         )
     }
