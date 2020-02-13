@@ -64,17 +64,16 @@ object CellsSunSetService {
         val description = "$cloudsDescriptions $lightDescription"
 
         val max = 24
-        if (low > 20.0) return MarkAndDescription("", 0, max, description)
+        if (low > 20.0) return MarkAndDescription("", 0, max, cloudsDescriptions)
         else {
             if (medium > 20.0) return MarkAndDescription("", 1 * coefFromLighting, max, description)
             else {
-
                 if (high > 50.0) return MarkAndDescription("", 6 * coefFromLighting, max, description)
                 else {
                     if (high > 20.0) return MarkAndDescription("", 4 * coefFromLighting, max, description)
-                    else if (high == 0.0) return MarkAndDescription("", (if (medium > 20.0) 1 else 0) * coefFromLighting, max, description)
+                    else if (high == 0.0) return MarkAndDescription("", (if (medium > 20.0) 1 else 0) * coefFromLighting, max, cloudsDescriptions)
                     else {
-                        return MarkAndDescription("", 2 * coefFromLighting, max, description)
+                        return MarkAndDescription("", 2 * coefFromLighting, max, cloudsDescriptions)
                     }
                 }
             }

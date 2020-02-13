@@ -52,7 +52,7 @@ object FarCloudsCalculator {
         val t = time.toInstant().epochSecond
 
         val forecast = json.array<JsonObject>("list")?.firstOrNull{
-            abs(it.long("dt")!! - t) < 30 * 60
+            abs(it.long("dt")!! - t) < 100 * 60
         }
 
         if (forecast == null) {
