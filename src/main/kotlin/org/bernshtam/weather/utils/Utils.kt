@@ -69,7 +69,7 @@ object Utils {
         val sunsetMomentToday = Utils.getSunsetMoment(LAT_START, LONG_START,  LocalDate.now())
         val sunsetMomentZonalDateTime = sunsetMomentToday.toLocalTimestamp().inLocalView()
         val now = ZonalDateTime.from(ZonedDateTime.now())
-        val day = if (sunsetMomentZonalDateTime.compareByLocalTimestamp(now)>1) LocalDate.now() else LocalDate.now().plusDays(1)
+        val day = if (sunsetMomentZonalDateTime.compareByLocalTimestamp(now)>0) LocalDate.now() else LocalDate.now().plusDays(1)
         return day
     }
 
