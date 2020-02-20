@@ -3,7 +3,7 @@ package org.bernshtam.weather.utils
 import com.grum.geocalc.Coordinate
 import com.grum.geocalc.EarthCalc
 import com.grum.geocalc.Point
-import com.sun.org.apache.xalan.internal.lib.ExsltMath
+
 import net.time4j.Moment
 import net.time4j.PlainDate
 import net.time4j.SI
@@ -19,6 +19,7 @@ import org.bernshtam.weather.PointAtTime
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.util.*
+import kotlin.math.abs
 
 object Utils {
 
@@ -117,5 +118,5 @@ object Utils {
         return pointAtTime
     }
 
-    fun Double.eq(a: Double) = ExsltMath.abs(this - a) < PRECISION
+    fun Double.eq(a: Double) = abs(this - a) < PRECISION
 }
