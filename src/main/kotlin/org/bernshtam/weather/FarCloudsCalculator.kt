@@ -41,11 +41,13 @@ object FarCloudsCalculator {
                         cl.sunset_far = getClouds(json100km, point100km[index].time)
                     }
                     c.forEach { updateCell(it) }
+                    print(".")
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        println()
     }
 
     private fun getClouds(json: JsonObject, time: ZonedDateTime): Double {
