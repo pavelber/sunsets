@@ -13,6 +13,7 @@ object DarkSkyConnector {
         val url = URL("https://api.darksky.net/forecast/$secretKey/${p.lat},${p.long},${p.getLocalTime()}")
 
         with(url.openConnection() as HttpURLConnection) {
+            connectTimeout = 20000
             println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")
 
             return inputStream.bufferedReader().use { it.readText() }

@@ -22,6 +22,7 @@ object TAFConnector {
         val url = URL("https://avwx.rest/api/taf/${p.lat},${p.long}?reporting=true&format=json&options=info&airport=false&token=$secretKey")
 
         with(url.openConnection() as HttpURLConnection) {
+            connectTimeout = 20000
             println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")
 
             return inputStream.bufferedReader().use { it.readText() }

@@ -32,6 +32,7 @@ object OpenWeatherConnector {
         rateLimiter.acquire()
         val url = URL("https://api.openweathermap.org/data/2.5/forecast?lat=${p.lat}&lon=${p.long}&APPID=$secretKey")
         with(url.openConnection() as HttpURLConnection) {
+            connectTimeout = 20000
            // println(url)
             require(responseCode == 200) { responseMessage }
             return inputStream.bufferedReader().use { it.readText() }
